@@ -1,0 +1,18 @@
+<li class="card <%= if show?(@card), do: "up" %>" data-rank="<%= rank(@card) %>" data-suit="<%= suit(@card) %>" data-pile="tab" data-selected="false"
+data-played="false">
+    <%= if show?(@card) do %>
+        <div class="<%= "#{card_rank_class(@card)} #{suit(@card)}" |> IO.inspect %>">
+            <div class="corner top">
+            <span class="rank"><%= rank(@card) %></span>
+            <span class="suit"></span>
+            </div>
+            <span class="suit top_center"></span>
+            <span class="suit middle_center"></span>
+            <span class="suit bottom_center"></span>
+            <div class="corner bottom">
+            <span class="rank"><%= rank(@card) %></span>
+            <span class="suit"></span>
+            </div>
+        </div>
+    <% end %>
+</li>

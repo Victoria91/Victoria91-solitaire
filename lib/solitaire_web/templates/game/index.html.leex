@@ -1,0 +1,736 @@
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" type="image/png"
+    href="https://static.codepen.io/assets/favicon/apple-touch-icon-5ae1a0698dcc2402e9712f7d01ed509a57814f994c660df9f7a952f3060705ee.png">
+  <meta name="apple-mobile-web-app-title" content="CodePen">
+  <link rel="shortcut icon" type="image/x-icon"
+    href="https://static.codepen.io/assets/favicon/favicon-aec34940fbc1a6e787974dcd360f2c6b63348d4b1f4e06c77743096d55480f33.ico">
+  <link rel="mask-icon" type=""
+    href="https://static.codepen.io/assets/favicon/logo-pin-8f3771b1072e3c38bd662872f6b673a722f4b3ca2421637d5596661b4e2132cc.svg"
+    color="#111">
+  <title>CodePen - solitaire-js</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://bfa.github.io/solitaire-js/css/bootstrap.min.css">
+  <style>
+    /* Thanks to
+   @donpark on GitHub Scalable CSS Playing Cards
+   https://donpark.github.io/scalable-css-playing-cards/ */
+  </style>
+  <script>
+    window.console = window.console || function (t) { };
+  </script>
+  <script>
+    if (document.location.search.match(/type=embed/gi)) {
+      window.parent.postMessage("resize", "*");
+    }
+  </script>
+</head>
+
+<body translate="no">
+  <div class="container">
+    <div id="score">
+      <div class="timer">
+        <button id="play-pause">
+          <i id="play">Play</i>
+          <i id="pause">Pause</i>
+        </button>
+        <label>Timer:</label>
+        <span>00:00</span>
+      </div>
+      <div class="move-count" data-moves="0">
+        <label>Moves:</label>
+        <span>0</span>
+      </div>
+      <div class="score" data-score="0">
+        <label>Score:</label>
+        <span>0</span>
+      </div>
+    </div>
+    <div id="table" style="opacity: 100;">
+  <div class="upper-row" style="height: 150px;">
+    <div id="stock" phx-click="change" class="stock pile" data-pile="stock" data-played="6" data-unplayed="17" style="height: 140px;">
+      <i class="reload-icon" data-action="reload">
+        <span></span>
+      </i>
+      <ul>
+        <li class="card" data-pile="stock" data-selected="false">
+          <%# <div class="six club"> %>
+            <%# <div class="corner top">
+              <span class="rank">6</span>
+              <span class="suit"></span>
+            </div>
+            <span class="suit top_left"></span>
+            <span class="suit top_right"></span>
+            <span class="suit middle_left"></span>
+            <span class="suit middle_right"></span>
+            <span class="suit bottom_left"></span>
+            <span class="suit bottom_right"></span>
+            <div class="corner bottom">
+              <span class="rank">6</span>
+              <span class="suit"></span>
+            </div>
+          </div> %>
+        </li>
+      </ul>
+    </div>
+
+    <div id="waste" class="waste pile"  data-pile="waste" data-played="1" data-unplayed="0" style="height: 140px;">
+      <ul>
+        <li class="card up" data-rank=<%= elem(@current,1) %> data-suit=<%= elem(@current,0) %> data-pile="waste" data-selected="false" data-played="true">
+          <div class="king <%= elem(@current,0) %>">
+            <div class="corner top">
+              <span class="grank"><%= elem(@current,1) %></span>
+              <span class="suit"></span>
+            </div>
+            <span class="face middle_center"></span>
+            <div class="corner bottom">
+              <span class="rank"><%= elem(@current,1) %></span>
+              <span class="suit"></span>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <ul id="fnd" class="fnd" data-played="0" data-unplayed="0">
+      <li id="spades" class="spades pile" data-pile="spades" data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;">
+        <ul></ul>
+      </li>
+      <li id="hearts" class="hearts pile" data-pile="hearts" data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;">
+        <ul></ul>
+      </li>
+      <li id="diamonds" class="diamonds pile" data-pile="diamonds" data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;">
+        <ul></ul>
+      </li>
+      <li id="clubs" class="clubs pile" data-pile="clubs" data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;">
+        <ul></ul>
+      </li>
+    </ul>
+  </div>
+
+
+  <div class="lower-row" style="height: 251.6px;">
+    <ul id="tab" class="tab" data-played="7" data-unplayed="21">
+      
+
+      <%= Enum.with_index(@cols) |> Enum.map(fn {col, index} -> %>
+        <%= render "column.html", col: col, index: index + 1 %>
+      <% end) %>
+
+      <%# <li class="pile" data-pile="4" data-played="1" data-unplayed="3" style="height: 131.6px;">
+        <ul>
+          <li class="card" data-rank="5" data-suit="club" data-pile="tab" data-selected="false">
+            <div class="five club">
+              <div class="corner top">
+                <span class="rank">5</span>
+                <span class="suit"></span>
+              </div>
+              <span class="suit top_left"></span>
+              <span class="suit top_right"></span>
+              <span class="suit middle_center"></span>
+              <span class="suit bottom_left"></span>
+              <span class="suit bottom_right"></span>
+              <div class="corner bottom">
+                <span class="rank">5</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+          <li class="card" data-rank="4" data-suit="spade" data-pile="tab" data-selected="false">
+            <div class="four spade">
+              <div class="corner top">
+                <span class="rank">4</span>
+                <span class="suit"></span>
+              </div>
+              <span class="suit top_left"></span>
+              <span class="suit top_right"></span>
+              <span class="suit bottom_left"></span>
+              <span class="suit bottom_right"></span>
+              <div class="corner bottom">
+                <span class="rank">4</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+          <li class="card" data-rank="4" data-suit="diamond" data-pile="tab" data-selected="false">
+            <div class="four diamond">
+              <div class="corner top">
+                <span class="rank">4</span>
+                <span class="suit"></span>
+              </div>
+              <span class="suit top_left"></span>
+              <span class="suit top_right"></span>
+              <span class="suit bottom_left"></span>
+              <span class="suit bottom_right"></span>
+              <div class="corner bottom">
+                <span class="rank">4</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+          <li class="card up" data-rank="9" data-suit="club" data-pile="tab" data-selected="false"
+            data-played="true">
+            <div class="nine club">
+              <div class="corner top">
+                <span class="rank">9</span>
+                <span class="suit"></span>
+              </div>
+              <span class="suit top_left"></span>
+              <span class="suit top_right"></span>
+              <span class="suit middle_top_left"></span>
+              <span class="suit middle_center"></span>
+              <span class="suit middle_top_right"></span>
+              <span class="suit bottom_left"></span>
+              <span class="suit bottom_right"></span>
+              <span class="suit middle_bottom_left"></span>
+              <span class="suit middle_bottom_right"></span>
+              <div class="corner bottom">
+                <span class="rank">9</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </li>
+
+      <li class="pile" data-pile="5" data-played="1" data-unplayed="4" style="height: 131.6px;">
+        <ul>
+          <li class="card" data-rank="2" data-suit="diamond" data-pile="tab" data-selected="false">
+            <div class="two diamond">
+              <div class="corner top">
+                <span class="rank">2</span>
+                <span class="suit"></span>
+              </div>
+              <span class="suit top_center"></span>
+              <span class="suit bottom_center"></span>
+              <div class="corner bottom">
+                <span class="rank">2</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+          <li class="card" data-rank="10" data-suit="spade" data-pile="tab" data-selected="false">
+            <div class="ten spade">
+              <div class="corner top">
+                <span class="rank">10</span>
+                <span class="suit"></span>
+              </div>
+              <span class="suit top_left"></span>
+              <span class="suit top_right"></span>
+              <span class="suit middle_top_left"></span>
+              <span class="suit middle_top_center"></span>
+              <span class="suit middle_top_right"></span>
+              <span class="suit bottom_left"></span>
+              <span class="suit bottom_right"></span>
+              <span class="suit middle_bottom_center"></span>
+              <span class="suit middle_bottom_left"></span>
+              <span class="suit middle_bottom_right"></span>
+              <div class="corner bottom">
+                <span class="rank">10</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+          <li class="card" data-rank="K" data-suit="heart" data-pile="tab" data-selected="false">
+            <div class="king heart">
+              <div class="corner top">
+                <span class="rank">K</span>
+                <span class="suit"></span>
+              </div>
+              <span class="face middle_center"></span>
+              <div class="corner bottom">
+                <span class="rank">K</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+          <li class="card" data-rank="10" data-suit="club" data-pile="tab" data-selected="false">
+            <div class="ten club">
+              <div class="corner top">
+                <span class="rank">10</span>
+                <span class="suit"></span>
+              </div>
+              <span class="suit top_left"></span>
+              <span class="suit top_right"></span>
+              <span class="suit middle_top_left"></span>
+              <span class="suit middle_top_center"></span>
+              <span class="suit middle_top_right"></span>
+              <span class="suit bottom_left"></span>
+              <span class="suit bottom_right"></span>
+              <span class="suit middle_bottom_center"></span>
+              <span class="suit middle_bottom_left"></span>
+              <span class="suit middle_bottom_right"></span>
+              <div class="corner bottom">
+                <span class="rank">10</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+          <li class="card up" data-rank="8" data-suit="heart" data-pile="tab" data-selected="false"
+            data-played="true">
+            <div class="eight heart">
+              <div class="corner top">
+                <span class="rank">8</span>
+                <span class="suit"></span>
+              </div>
+              <span class="suit top_left"></span>
+              <span class="suit top_right"></span>
+              <span class="suit middle_left"></span>
+              <span class="suit middle_top_center"></span>
+              <span class="suit middle_right"></span>
+              <span class="suit middle_bottom_center"></span>
+              <span class="suit bottom_left"></span>
+              <span class="suit bottom_right"></span>
+              <div class="corner bottom">
+                <span class="rank">8</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </li>
+
+      <li class="pile" data-pile="6" data-played="1" data-unplayed="5" style="height: 131.6px;">
+        <ul>
+          <li class="card" data-rank="K" data-suit="spade" data-pile="tab" data-selected="false">
+            <div class="king spade">
+              <div class="corner top">
+                <span class="rank">K</span>
+                <span class="suit"></span>
+              </div>
+              <span class="face middle_center"></span>
+              <div class="corner bottom">
+                <span class="rank">K</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+          <li class="card" data-rank="3" data-suit="heart" data-pile="tab" data-selected="false">
+            <div class="three heart">
+              <div class="corner top">
+                <span class="rank">3</span>
+                <span class="suit"></span>
+              </div>
+              <span class="suit top_center"></span>
+              <span class="suit middle_center"></span>
+              <span class="suit bottom_center"></span>
+              <div class="corner bottom">
+                <span class="rank">3</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+          <li class="card" data-rank="8" data-suit="spade" data-pile="tab" data-selected="false">
+            <div class="eight spade">
+              <div class="corner top">
+                <span class="rank">8</span>
+                <span class="suit"></span>
+              </div>
+              <span class="suit top_left"></span>
+              <span class="suit top_right"></span>
+              <span class="suit middle_left"></span>
+              <span class="suit middle_top_center"></span>
+              <span class="suit middle_right"></span>
+              <span class="suit middle_bottom_center"></span>
+              <span class="suit bottom_left"></span>
+              <span class="suit bottom_right"></span>
+              <div class="corner bottom">
+                <span class="rank">8</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+          <li class="card" data-rank="J" data-suit="heart" data-pile="tab" data-selected="false">
+            <div class="jack heart">
+              <div class="corner top">
+                <span class="rank">J</span>
+                <span class="suit"></span>
+              </div>
+              <span class="face middle_center"></span>
+              <div class="corner bottom">
+                <span class="rank">J</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+          <li class="card" data-rank="6" data-suit="club" data-pile="tab" data-selected="false">
+            <div class="six club">
+              <div class="corner top">
+                <span class="rank">6</span>
+                <span class="suit"></span>
+              </div>
+              <span class="suit top_left"></span>
+              <span class="suit top_right"></span>
+              <span class="suit middle_left"></span>
+              <span class="suit middle_right"></span>
+              <span class="suit bottom_left"></span>
+              <span class="suit bottom_right"></span>
+              <div class="corner bottom">
+                <span class="rank">6</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+          <li class="card up" data-rank="J" data-suit="spade" data-pile="tab" data-selected="false"
+            data-played="true">
+            <div class="jack spade">
+              <div class="corner top">
+                <span class="rank">J</span>
+                <span class="suit"></span>
+              </div>
+              <span class="face middle_center"></span>
+              <div class="corner bottom">
+                <span class="rank">J</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </li>
+
+      <li class="pile" data-pile="7" data-played="1" data-unplayed="6" style="height: 131.6px;">
+        <ul>
+          <li class="card" data-rank="Q" data-suit="spade" data-pile="tab" data-selected="false">
+            <div class="queen spade">
+              <div class="corner top">
+                <span class="rank">Q</span>
+                <span class="suit"></span>
+              </div>
+              <span class="face middle_center"></span>
+              <div class="corner bottom">
+                <span class="rank">Q</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+          <li class="card" data-rank="K" data-suit="club" data-pile="tab" data-selected="false">
+            <div class="king club">
+              <div class="corner top">
+                <span class="rank">K</span>
+                <span class="suit"></span>
+              </div>
+              <span class="face middle_center"></span>
+              <div class="corner bottom">
+                <span class="rank">K</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+          <li class="card" data-rank="8" data-suit="diamond" data-pile="tab" data-selected="false">
+            <div class="eight diamond">
+              <div class="corner top">
+                <span class="rank">8</span>
+                <span class="suit"></span>
+              </div>
+              <span class="suit top_left"></span>
+              <span class="suit top_right"></span>
+              <span class="suit middle_left"></span>
+              <span class="suit middle_top_center"></span>
+              <span class="suit middle_right"></span>
+              <span class="suit middle_bottom_center"></span>
+              <span class="suit bottom_left"></span>
+              <span class="suit bottom_right"></span>
+              <div class="corner bottom">
+                <span class="rank">8</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+          <li class="card" data-rank="2" data-suit="club" data-pile="tab" data-selected="false">
+            <div class="two club">
+              <div class="corner top">
+                <span class="rank">2</span>
+                <span class="suit"></span>
+              </div>
+              <span class="suit top_center"></span>
+              <span class="suit bottom_center"></span>
+              <div class="corner bottom">
+                <span class="rank">2</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+          <li class="card" data-rank="8" data-suit="club" data-pile="tab" data-selected="false">
+            <div class="eight club">
+              <div class="corner top">
+                <span class="rank">8</span>
+                <span class="suit"></span>
+              </div>
+              <span class="suit top_left"></span>
+              <span class="suit top_right"></span>
+              <span class="suit middle_left"></span>
+              <span class="suit middle_top_center"></span>
+              <span class="suit middle_right"></span>
+              <span class="suit middle_bottom_center"></span>
+              <span class="suit bottom_left"></span>
+              <span class="suit bottom_right"></span>
+              <div class="corner bottom">
+                <span class="rank">8</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+          <li class="card" data-rank="Q" data-suit="club" data-pile="tab" data-selected="false">
+            <div class="queen club">
+              <div class="corner top">
+                <span class="rank">Q</span>
+                <span class="suit"></span>
+              </div>
+              <span class="face middle_center"></span>
+              <div class="corner bottom">
+                <span class="rank">Q</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+          <li class="card up" data-rank="2" data-suit="spade" data-pile="tab" data-selected="false"
+            data-played="true">
+            <div class="two spade">
+              <div class="corner top">
+                <span class="rank">2</span>
+                <span class="suit"></span>
+              </div>
+              <span class="suit top_center"></span>
+              <span class="suit bottom_center"></span>
+              <div class="corner bottom">
+                <span class="rank">2</span>
+                <span class="suit"></span>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </li> %>
+    </ul>
+   </div>
+  </div>
+  </div>
+
+  <button id="auto-win">Auto Win</button>
+  <canvas id="confetti"></canvas>
+  <ul class="template">
+    <li data-rank="2">
+      <div class="two {{suit}}">
+        <div class="corner top">
+          <span class="rank">2</span>
+          <span class="suit"></span>
+        </div>
+        <span class="suit top_center"></span>
+        <span class="suit bottom_center"></span>
+        <div class="corner bottom">
+          <span class="rank">2</span>
+          <span class="suit"></span>
+        </div>
+      </div>
+    </li>
+    <li data-rank="3">
+      <div class="three {{suit}}">
+        <div class="corner top">
+          <span class="rank">3</span>
+          <span class="suit"></span>
+        </div>
+        <span class="suit top_center"></span>
+        <span class="suit middle_center"></span>
+        <span class="suit bottom_center"></span>
+        <div class="corner bottom">
+          <span class="rank">3</span>
+          <span class="suit"></span>
+        </div>
+      </div>
+    </li>
+    <li data-rank="4">
+      <div class="four {{suit}}">
+        <div class="corner top">
+          <span class="rank">4</span>
+          <span class="suit"></span>
+        </div>
+        <span class="suit top_left"></span>
+        <span class="suit top_right"></span>
+        <span class="suit bottom_left"></span>
+        <span class="suit bottom_right"></span>
+        <div class="corner bottom">
+          <span class="rank">4</span>
+          <span class="suit"></span>
+        </div>
+      </div>
+    </li>
+    <li data-rank="5">
+      <div class="five {{suit}}">
+        <div class="corner top">
+          <span class="rank">5</span>
+          <span class="suit"></span>
+        </div>
+        <span class="suit top_left"></span>
+        <span class="suit top_right"></span>
+        <span class="suit middle_center"></span>
+        <span class="suit bottom_left"></span>
+        <span class="suit bottom_right"></span>
+        <div class="corner bottom">
+          <span class="rank">5</span>
+          <span class="suit"></span>
+        </div>
+      </div>
+    </li>
+    <li data-rank="6">
+      <div class="six {{suit}}">
+        <div class="corner top">
+          <span class="rank">6</span>
+          <span class="suit"></span>
+        </div>
+        <span class="suit top_left"></span>
+        <span class="suit top_right"></span>
+        <span class="suit middle_left"></span>
+        <span class="suit middle_right"></span>
+        <span class="suit bottom_left"></span>
+        <span class="suit bottom_right"></span>
+        <div class="corner bottom">
+          <span class="rank">6</span>
+          <span class="suit"></span>
+        </div>
+      </div>
+    </li>
+    <li data-rank="7">
+      <div class="seven {{suit}}">
+        <div class="corner top">
+          <span class="rank">7</span>
+          <span class="suit"></span>
+        </div>
+        <span class="suit top_left"></span>
+        <span class="suit top_right"></span>
+        <span class="suit middle_left"></span>
+        <span class="suit middle_top"></span>
+        <span class="suit middle_right"></span>
+        <span class="suit bottom_left"></span>
+        <span class="suit bottom_right"></span>
+        <div class="corner bottom">
+          <span class="rank">7</span>
+          <span class="suit"></span>
+        </div>
+      </div>
+    </li>
+    <li data-rank="8">
+      <div class="eight {{suit}}">
+        <div class="corner top">
+          <span class="rank">8</span>
+          <span class="suit"></span>
+        </div>
+        <span class="suit top_left"></span>
+        <span class="suit top_right"></span>
+        <span class="suit middle_left"></span>
+        <span class="suit middle_top_center"></span>
+        <span class="suit middle_right"></span>
+        <span class="suit middle_bottom_center"></span>
+        <span class="suit bottom_left"></span>
+        <span class="suit bottom_right"></span>
+        <div class="corner bottom">
+          <span class="rank">8</span>
+          <span class="suit"></span>
+        </div>
+      </div>
+    </li>
+    <li data-rank="9">
+      <div class="nine {{suit}}">
+        <div class="corner top">
+          <span class="rank">9</span>
+          <span class="suit"></span>
+        </div>
+        <span class="suit top_left"></span>
+        <span class="suit top_right"></span>
+        <span class="suit middle_top_left"></span>
+        <span class="suit middle_center"></span>
+        <span class="suit middle_top_right"></span>
+        <span class="suit bottom_left"></span>
+        <span class="suit bottom_right"></span>
+        <span class="suit middle_bottom_left"></span>
+        <span class="suit middle_bottom_right"></span>
+        <div class="corner bottom">
+          <span class="rank">9</span>
+          <span class="suit"></span>
+        </div>
+      </div>
+    </li>
+    <li data-rank="10">
+      <div class="ten {{suit}}">
+        <div class="corner top">
+          <span class="rank">10</span>
+          <span class="suit"></span>
+        </div>
+        <span class="suit top_left"></span>
+        <span class="suit top_right"></span>
+        <span class="suit middle_top_left"></span>
+        <span class="suit middle_top_center"></span>
+        <span class="suit middle_top_right"></span>
+        <span class="suit bottom_left"></span>
+        <span class="suit bottom_right"></span>
+        <span class="suit middle_bottom_center"></span>
+        <span class="suit middle_bottom_left"></span>
+        <span class="suit middle_bottom_right"></span>
+        <div class="corner bottom">
+          <span class="rank">10</span>
+          <span class="suit"></span>
+        </div>
+      </div>
+    </li>
+    <li data-rank="J">
+      <div class="jack {{suit}}">
+        <div class="corner top">
+          <span class="rank">J</span>
+          <span class="suit"></span>
+        </div>
+        <span class="face middle_center"></span>
+        <div class="corner bottom">
+          <span class="rank">J</span>
+          <span class="suit"></span>
+        </div>
+      </div>
+    </li>
+    <li data-rank="Q">
+      <div class="queen {{suit}}">
+        <div class="corner top">
+          <span class="rank">Q</span>
+          <span class="suit"></span>
+        </div>
+        <span class="face middle_center"></span>
+        <div class="corner bottom">
+          <span class="rank">Q</span>
+          <span class="suit"></span>
+        </div>
+      </div>
+    </li>
+    <li data-rank="K">
+      <div class="king {{suit}}">
+        <div class="corner top">
+          <span class="rank">K</span>
+          <span class="suit"></span>
+        </div>
+        <span class="face middle_center"></span>
+        <div class="corner bottom">
+          <span class="rank">K</span>
+          <span class="suit"></span>
+        </div>
+      </div>
+    </li>
+    <li data-rank="A">
+      <div class="ace {{suit}}">
+        <div class="corner top">
+          <span class="rank">A</span>
+          <span class="suit"></span>
+        </div>
+        <span class="suit middle_center"></span>
+        <div class="corner bottom">
+          <span class="rank">A</span>
+          <span class="suit"></span>
+        </div>
+      </div>
+    </li>
+  </ul>
+  <script
+    src="https://static.codepen.io/assets/common/stopExecutionOnTimeout-157cd5b220a5c80d4ff8e0e70ac069bffd87a61252088146915e8726e5d9f147.js"></script>
+  <script id="rendered-js">
+
+  </script>
+
+
+</body>
+
+</html>

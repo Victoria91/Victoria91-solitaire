@@ -15,7 +15,8 @@ config :solitaire, SolitaireWeb.Endpoint,
   url: [host: "localhost"],
   secret_key_base: "4Jjsq5FP9mb7hhetW06TAes6bOZgLfvqDGaR2wvDcrlTY/5W6RLTz7GkUHmQx66o",
   render_errors: [view: SolitaireWeb.ErrorView, accepts: ~w(html json)],
-  pubsub: [name: Solitaire.PubSub, adapter: Phoenix.PubSub.PG2]
+  pubsub: [name: Solitaire.PubSub, adapter: Phoenix.PubSub.PG2],
+  live_view: [signing_salt: "SvfJcJBD"]
 
 # Configures Elixir's Logger
 config :logger, :console,
