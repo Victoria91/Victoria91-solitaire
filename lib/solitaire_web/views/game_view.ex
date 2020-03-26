@@ -7,12 +7,9 @@ defmodule SolitaireWeb.GameView do
 
   def suit(card), do: elem(card, 0)
 
-  def show?(card), do: elem(card, 2)
-
   def card_rank_class(card) do
     case Map.fetch(@rank_classes, rank(card)) do
       {:ok, class} -> class
-      # end
       _ -> ""
     end
   end

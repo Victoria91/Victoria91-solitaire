@@ -20,6 +20,36 @@ defmodule SolitaireWeb.GameLive do
     {:ok, socket}
   end
 
+  def handle_event("move_from_deck", _val, socket) do
+    pid = socket.assigns.pid
+
+    new_socket = socket |> assign(:move_from_deck, true)
+
+    IO.inspect("SELECTED")
+
+    # state = Game.move_from_deck(pid, 2)
+    # new_socket = assign_game_state(socket, state, pid)
+
+    {:noreply, new_socket}
+  end
+
+  def handle_event("move", %{"column" => column} = params, socket) do
+    params |> IO.inspect()
+    column |> IO.inspect()
+
+    if socket.assigns[:move_from_deck] do
+      pid = socket.assigns.pid
+      {column, _} = Integer.parse(column)
+      state = Game.move_from_deck(pid, column)
+      new_socket = assign_game_state(socket, state, pid) |> assign(:move_from_deck, true)
+
+      {:noreply, new_socket}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @spec handle_event(<<_::48>>, any, Phoenix.LiveView.Socket.t()) :: {:noreply, any}
   def handle_event("change", _val, socket) do
     pid = socket.assigns.pid
 

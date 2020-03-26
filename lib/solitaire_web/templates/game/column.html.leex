@@ -1,7 +1,7 @@
-<li class="pile" data-pile="<%= @index %>" data-unplayed="<%= @index - 1 %>" style="height: 131.6px;">
+<li class="pile" phx-click="move" phx-value-column="<%= @index-1 %>" data-pile="<%= @index %>" data-unplayed="<%= @index - 1 %>" style="height: 131.6px;">
     <ul>
-        <%= Enum.map @col, fn card -> %>
-            <%= render "card.html", card: card %>
+        <%= Enum.with_index(@col[:cards]) |> Enum.map fn {card, card_index} -> %>
+            <%= render "card.html", card: card, played?: card_index > @col[:unplayed] - 1 %>
         <% end %>
     </ul>
 </li>
