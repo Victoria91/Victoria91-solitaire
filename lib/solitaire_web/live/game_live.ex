@@ -1,34 +1,23 @@
 defmodule SolitaireWeb.GameLive do
   use Phoenix.LiveView
-  alias Solitaire.Game
+  alias Solitaire.Game.Sever, as: GameServer
 
   def render(assigns) do
-    # IO.inspect(assigns, label: "assigns")
     Phoenix.View.render(SolitaireWeb.GameView, "index.html", assigns)
-
-    # ~L"""
-    # Current count: <%= @count %> <button phx-click="dec">-</button> <button phx-click="inc">+</button>
-    # """
   end
 
-  def mount(_params, socket) do
-    {:ok, pid} = Game.start_link([])
-    state = Game.state(pid)
-
+  def mount(_params, _session, socket) do
+    {:ok, pid} = GameServer.start_link([])
+    state = GameServer.state(pid)
     socket = assign_game_state(socket, state, pid)
 
     {:ok, socket}
   end
 
   def handle_event("move_from_deck", _val, socket) do
-    pid = socket.assigns.pid
-
     new_socket = socket |> assign(:move_from_deck, true)
 
     IO.inspect("SELECTED")
-
-    # state = Game.move_from_deck(pid, 2)
-    # new_socket = assign_game_state(socket, state, pid)
 
     {:noreply, new_socket}
   end
@@ -36,16 +25,26 @@ defmodule SolitaireWeb.GameLive do
   def handle_event("move", %{"column" => column} = params, socket) do
     params |> IO.inspect()
     column |> IO.inspect()
+    {column, _} = Integer.parse(column)
 
-    if socket.assigns[:move_from_deck] do
-      pid = socket.assigns.pid
-      {column, _} = Integer.parse(column)
-      state = Game.move_from_deck(pid, column)
-      new_socket = assign_game_state(socket, state, pid) |> assign(:move_from_deck, true)
+    cond do
+      socket.assigns[:move_from_deck] ->
+        pid = socket.assigns.pid
+        state = GameServer.move_from_deck(pid, column)
+        new_socket = assign_game_state(socket, state, pid) |> assign(:move_from_deck, false)
 
-      {:noreply, new_socket}
-    else
-      {:noreply, socket}
+        {:noreply, new_socket}
+
+      from_column = socket.assigns[:move_from_column] ->
+        pid = socket.assigns.pid
+        state = GameServer.move_from_column(pid, from_column, column)
+        new_socket = assign_game_state(socket, state, pid) |> assign(:move_from_column, false)
+
+        {:noreply, new_socket}
+
+      true ->
+        new_socket = socket |> assign(:move_from_column, column)
+        {:noreply, new_socket}
     end
   end
 
@@ -53,7 +52,7 @@ defmodule SolitaireWeb.GameLive do
   def handle_event("change", _val, socket) do
     pid = socket.assigns.pid
 
-    state = Game.change(pid)
+    state = GameServer.change(pid)
 
     new_socket = assign_game_state(socket, state, pid)
 
@@ -62,6 +61,7 @@ defmodule SolitaireWeb.GameLive do
 
   defp assign_game_state(socket, state, pid) do
     assign(socket, :cols, state.cols)
+    |> assign(:deck_length, state.deck_length)
     |> assign(:deck, state.deck)
     |> assign(:current, state.current)
     |> assign(:pid, pid)

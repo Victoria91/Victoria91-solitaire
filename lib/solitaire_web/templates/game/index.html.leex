@@ -55,24 +55,14 @@
         <span></span>
       </i>
       <ul>
-        <li class="card" data-pile="stock" data-selected="false">
-          <%# <div class="six club"> %>
-            <%# <div class="corner top">
-              <span class="rank">6</span>
-              <span class="suit"></span>
-            </div>
-            <span class="suit top_left"></span>
-            <span class="suit top_right"></span>
-            <span class="suit middle_left"></span>
-            <span class="suit middle_right"></span>
-            <span class="suit bottom_left"></span>
-            <span class="suit bottom_right"></span>
-            <div class="corner bottom">
-              <span class="rank">6</span>
-              <span class="suit"></span>
-            </div>
-          </div> %>
-        </li>
+        <%= if Enum.at(@deck, 1) != [] do %>
+          <li class="card" data-pile="stock" data-selected="false">
+          </li>
+          <%=  Enum.map(1 .. @deck_length, fn  _ -> %>
+            <li class="card" data-pile="stock" data-selected="false">
+            </li> %>
+          <% end) %>
+        <% end %>
       </ul>
     </div>
 
