@@ -19,8 +19,8 @@ defmodule SolitaireWeb.Router do
   scope "/", SolitaireWeb do
     pipe_through :browser
 
-    get "/", PageController, :index
-    live "/game", GameLive
+    # get "/", PageController, :index
+    live "/", GameLive
   end
 
   # Other scopes may use custom stacks.

@@ -48,10 +48,10 @@ defmodule Solitaire.Game.Sever do
     {:reply, state, state}
   end
 
-  def handle_call(:change, _from, %{deck: [h | [[] | t]]} = state) do
+  def handle_call(:change, _from, state) do
     IO.inspect("empty!!!")
-    current = t |> List.first() |> List.first()
-    new_deck = t ++ [h]
+
+    {current, new_deck} = Game.change(state)
 
     new_state =
       Map.put(state, :deck, new_deck) |> Map.put(:current, current) |> put_deck_length(new_deck)
@@ -60,9 +60,7 @@ defmodule Solitaire.Game.Sever do
   end
 
   def handle_call(:change, _from, %{deck: [h | t]} = state) do
-    h |> IO.inspect(label: "head")
-    current = t |> List.first() |> List.first()
-    new_deck = t ++ [h]
+    {current, new_deck} = Game.change(state)
 
     new_state =
       Map.put(state, :deck, new_deck)

@@ -28,6 +28,21 @@ defmodule Solitaire.Game do
   end
 
   @doc """
+    Берет следующую карту из колоды
+  """
+  def change(%{deck: [h | [[] | t]]} = state) do
+    current = t |> List.first() |> List.first()
+    new_deck = (t ++ [h]) |> List.flatten() |> split_deck_by(3)
+    new_deck = new_deck ++ [[]]
+
+    {current, new_deck}
+  end
+
+  def change(%{deck: [h | [ht | tt] = rest] = deck}) do
+    {hd(ht), rest ++ [h]}
+  end
+
+  @doc """
     Разбивает колоду на массив из `count` карт
   """
   @spec split_deck_by(list(tuple), pos_integer) :: [[any]]
@@ -56,13 +71,17 @@ defmodule Solitaire.Game do
          to_col_num
        ) do
     %{cards: from_cards, unplayed: unplayed} = from_column
-    %{cards: [to | _] = to_cards} = to_column
+    %{cards: to_cards} = to_column
+
+    to = if to_cards != [], do: hd(to_cards), else: nil |> IO.inspect(label: "to")
 
     for_move_count = (length(from_cards) - unplayed) |> IO.inspect(label: "from count")
 
     {cards_to_move, rest_cards} = Enum.split(from_cards, for_move_count)
 
-    if can_move?(to, List.last(cards_to_move)) do
+    List.last(cards_to_move) |> IO.inspect(label: "from9")
+
+    if can_move?(to, List.last(cards_to_move)) |> IO.inspect(label: "can move!!!") do
       from_column = %{cards: rest_cards, unplayed: maybe_decrease_unplayed(unplayed)}
       to_column = %{to_column | cards: cards_to_move ++ to_cards}
 
@@ -83,7 +102,8 @@ defmodule Solitaire.Game do
          to_col_num
        ) do
     %{cards: [from | _]} = from_column
-    %{cards: [to | _] = to_cards} = to_column
+    %{cards: to_cards} = to_column
+    to = if to_cards != [], do: hd(to_cards), else: nil |> IO.inspect(label: "to")
 
     if can_move?(to, from) |> IO.inspect(label: "CAN MOVE") do
       from_column = take_card_from_column(from_column)
@@ -136,10 +156,17 @@ defmodule Solitaire.Game do
     end
   end
 
+  defp can_move?(nil, {_, "K"}), do: true
+
+  defp can_move?(nil, _), do: false
+
   defp can_move?({suit, _}, {suit, _}), do: false
 
   defp can_move?({_, rank}, {_, rank}), do: false
 
+  defp can_move?({_, "2"}, {_, "A"}), do: true
+
+  # to, from
   defp can_move?({col_suit, col_rank}, {deck_suit, dec_rank}) do
     with 1 <- rank_index(col_rank) - rank_index(dec_rank),
          true <- suits_of_different_color?(deck_suit, col_suit) do
