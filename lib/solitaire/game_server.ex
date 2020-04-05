@@ -52,32 +52,10 @@ defmodule Solitaire.Game.Sever do
     new_deck = Game.change(state) |> IO.inspect(label: "new_deck")
     state |> IO.inspect(label: "STATE ON CHANGE")
 
-    new_state = Map.put(state, :deck, new_deck)
+    new_state = Map.put(state, :deck, new_deck) |> put_deck_length
 
     check_length(state)
     {:reply, new_state, new_state}
-  end
-
-  def check_length(%{deck: deck, cols: cols}) do
-    cols_len =
-      cols
-      |> Enum.map(& &1[:cards])
-      |> Enum.map(&length/1)
-      |> Enum.reduce(&(&1 + &2))
-
-    deck_len =
-      deck
-      |> Enum.map(&length/1)
-      |> Enum.reduce(&(&1 + &2))
-
-    if cols_len + deck_len != 52 |> IO.inspect(label: "length") do
-      raise "AOAOAOOO"
-    end
-  end
-
-  defp put_deck_length(state, deck) do
-    deck_length = Enum.find_index(deck, &(&1 == [])) || 7
-    %{state | deck_length: deck_length}
   end
 
   def handle_call(
@@ -106,8 +84,6 @@ defmodule Solitaire.Game.Sever do
       Map.put(state, :cols, result.cols)
       |> Map.put(:deck, result.deck)
 
-    # |> Map.put(:current, result.current)
-
     check_length(new_state)
 
     {:reply, new_state, new_state}
@@ -130,5 +106,27 @@ defmodule Solitaire.Game.Sever do
       })
 
     {:noreply, new_state}
+  end
+
+  defp put_deck_length(%{deck: deck} = state) do
+    deck_length = Enum.find_index(deck, &(&1 == [])) || 7
+    %{state | deck_length: deck_length}
+  end
+
+  def check_length(%{deck: deck, cols: cols}) do
+    cols_len =
+      cols
+      |> Enum.map(& &1[:cards])
+      |> Enum.map(&length/1)
+      |> Enum.reduce(&(&1 + &2))
+
+    deck_len =
+      deck
+      |> Enum.map(&length/1)
+      |> Enum.reduce(&(&1 + &2))
+
+    if cols_len + deck_len != 52 |> IO.inspect(label: "length") do
+      raise "AOAOAOOO"
+    end
   end
 end

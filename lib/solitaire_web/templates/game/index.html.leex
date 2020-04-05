@@ -68,19 +68,21 @@
 
     <div id="waste" class="waste pile" phx-click="move_from_deck" data-pile="waste" data-played="1" data-unplayed="0" style="height: 140px;">
       <ul>
-        <li class="card up" data-rank=<%= elem(current(@deck),1) %> data-suit=<%= elem(current(@deck),0) %> data-pile="waste" data-selected="true" data-played="true">
-          <div class="king <%= elem(current(@deck),0) %>">
-            <div class="corner top">
-              <span class="grank"><%= elem(current(@deck),1) %></span>
-              <span class="suit"></span>
+        <%= if current(@deck) do %>
+          <li class="card up" data-rank=<%= elem(current(@deck),1) %> data-suit=<%= elem(current(@deck),0) %> data-pile="waste" data-selected="true" data-played="true">
+            <div class="king <%= elem(current(@deck),0) %>">
+              <div class="corner top">
+                <span class="grank"><%= elem(current(@deck),1) %></span>
+                <span class="suit"></span>
+              </div>
+              <span class="face middle_center"></span>
+              <div class="corner bottom">
+                <span class="rank"><%= elem(current(@deck),1) %></span>
+                <span class="suit"></span>
+              </div>
             </div>
-            <span class="face middle_center"></span>
-            <div class="corner bottom">
-              <span class="rank"><%= elem(current(@deck),1) %></span>
-              <span class="suit"></span>
-            </div>
-          </div>
-        </li>
+          </li>
+        <% end %>
       </ul>
     </div>
     <ul id="fnd" class="fnd" data-played="0" data-unplayed="0">
