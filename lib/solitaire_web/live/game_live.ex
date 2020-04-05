@@ -63,7 +63,6 @@ defmodule SolitaireWeb.GameLive do
     assign(socket, :cols, state.cols)
     |> assign(:deck_length, state.deck_length)
     |> assign(:deck, state.deck)
-    |> assign(:current, state.current)
     |> assign(:pid, pid)
   end
 end

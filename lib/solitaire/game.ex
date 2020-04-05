@@ -9,7 +9,6 @@ defmodule Solitaire.Game do
 
   defstruct cols: [],
             deck: @deck,
-            current: nil,
             deck_length: 8
 
   @doc "Возвращает перемешанную колоду карт"
@@ -31,15 +30,12 @@ defmodule Solitaire.Game do
     Берет следующую карту из колоды
   """
   def change(%{deck: [h | [[] | t]]}) do
-    current = t |> List.first() |> List.first()
     new_deck = (t ++ [h]) |> List.flatten() |> split_deck_by(3)
-    new_deck = new_deck ++ [[]]
-
-    {current, new_deck}
+    new_deck ++ [[]]
   end
 
-  def change(%{deck: [h | [ht | _] = rest]}) do
-    {hd(ht), rest ++ [h]}
+  def change(%{deck: [h | rest]}) do
+    rest ++ [h]
   end
 
   @doc """
@@ -125,28 +121,32 @@ defmodule Solitaire.Game do
   defp maybe_decrease_unplayed(0), do: 0
   defp maybe_decrease_unplayed(unplayed), do: unplayed - 1
 
-  defp rest_deck([[h | t] | [[] | rest]]) do
-    IO.inspect("rest_deck11111")
-    {h, [t | rest] ++ [[]]}
+  defp rest_deck([[_h | t] | [[] | rest]]) do
+    [t | rest] ++ [[]]
   end
 
-  defp rest_deck([[_current | []] | [[next | _rest] | _rest_cards] = rest_deck]) do
-    IO.inspect("rest_deck2222")
-
-    {next, rest_deck}
+  defp rest_deck([[_current | []] | rest_deck]) do
+    rest_deck
   end
 
-  defp rest_deck([[_current | [next | _rest] = rest] | rest_deck]) do
+  defp rest_deck([[_current | rest] | rest_deck]) do
     IO.inspect("rest_deck333331")
 
-    {next, [rest | rest_deck]}
+    [rest | rest_deck]
   end
 
+  defp current(deck) do
+    deck |> List.first() |> List.first()
+  end
+
+  @spec move_from_deck(%{cols: any, deck: [...]}, integer) :: %{cols: any, deck: [...]}
   def move_from_deck(
-        %{current: current, deck: deck, cols: cols} = game,
+        %{deck: deck, cols: cols} = game,
         column
       ) do
-    {next, deck} = rest_deck(deck)
+    current = current(deck)
+
+    deck = rest_deck(deck)
 
     %{cards: cards, unplayed: unplayed} = Enum.at(cols, column)
 
@@ -160,7 +160,6 @@ defmodule Solitaire.Game do
       game
       |> Map.put(:cols, cols)
       |> Map.put(:deck, deck)
-      |> Map.put(:current, next)
     else
       IO.inspect("NOT VALID MOVE")
       game

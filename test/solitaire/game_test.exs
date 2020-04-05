@@ -18,11 +18,9 @@ defmodule Solitaire.GameTest do
 
       #       {_, result_deck} = Game.change(%{deck: deck}) |> IO.inspect()
       # assert result_deck
-      %{deck: [h | [ht | _tt] = rest] = deck} = game = GameServer.state(pid) |> IO.inspect()
-      h |> IO.inspect(label: "H")
-      rest |> IO.inspect(label: "RESTTT")
-      {_current, rest_deck} = res = Game.change(game) |> IO.inspect(label: "res")
-      assert {hd(ht), rest ++ [h]} == res
+      %{deck: [h | rest] = deck} = game = GameServer.state(pid) |> IO.inspect()
+      rest_deck = res = Game.change(game) |> IO.inspect(label: "res")
+      assert rest ++ [h] == res
       assert length(rest_deck) == length(deck)
     end
 
@@ -34,8 +32,7 @@ defmodule Solitaire.GameTest do
         [{"heart", "8"}, {"club", "10"}, {"club", "6"}]
       ]
 
-      {current, new_deck} = Game.change(%{deck: deck})
-      assert current == {"heart", "A"}
+      new_deck = Game.change(%{deck: deck})
       deck_chunk_length = Enum.map(new_deck, &length/1)
       assert deck_chunk_length == [3, 3, 2, 0]
     end
@@ -68,7 +65,6 @@ defmodule Solitaire.GameTest do
     setup do
       {:ok, pid} = GameServer.start_link([])
       {:ok, %{pid: pid}}
-      # {:ok, }
     end
 
     test "1", %{pid: pid} do
@@ -87,7 +83,6 @@ defmodule Solitaire.GameTest do
       game =
         game
         |> Map.put(:deck, initial_deck)
-        |> Map.put(:current, {"heart", "4"})
         |> Map.put(:cols, cols)
 
       %{deck: result_deck, cols: result_cols} = Game.move_from_deck(game, 2)
@@ -111,7 +106,6 @@ defmodule Solitaire.GameTest do
       game =
         game
         |> Map.put(:deck, initial_deck)
-        |> Map.put(:current, {"heart", "4"})
         |> Map.put(:cols, cols)
 
       %{deck: result_deck, cols: result_cols} =
@@ -139,7 +133,6 @@ defmodule Solitaire.GameTest do
         game
         |> Map.put(:deck, deck)
         |> Map.put(:cols, new_cols)
-        |> Map.put(:current, {"diamond", "5"})
 
       %{deck: result_deck} = Game.move_from_deck(game, 3)
 
@@ -203,7 +196,6 @@ defmodule Solitaire.GameTest do
             unplayed: 5
           }
         ],
-        current: {"heart", "J"},
         deck: [
           [{"heart", "J"}, {"heart", "D"}, {"club", "8"}],
           [],

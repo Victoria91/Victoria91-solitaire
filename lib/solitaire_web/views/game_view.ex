@@ -13,4 +13,8 @@ defmodule SolitaireWeb.GameView do
       _ -> ""
     end
   end
+
+  def current(deck) do
+    deck |> List.first() |> List.first()
+  end
 end
