@@ -75,8 +75,6 @@ defmodule Solitaire.Game do
 
     {cards_to_move, rest_cards} = Enum.split(from_cards, for_move_count)
 
-    List.last(cards_to_move) |> IO.inspect(label: "from9")
-
     if can_move?(to, List.last(cards_to_move)) |> IO.inspect(label: "can move!!!") do
       from_column = %{cards: rest_cards, unplayed: maybe_decrease_unplayed(unplayed)}
       to_column = %{to_column | cards: cards_to_move ++ to_cards}
@@ -148,14 +146,14 @@ defmodule Solitaire.Game do
 
     deck = rest_deck(deck)
 
-    %{cards: cards, unplayed: unplayed} = Enum.at(cols, column)
+    col = %{cards: cards} = Enum.at(cols, column)
 
     upper_card = List.first(cards)
 
     if can_move?(upper_card, current) do
       cards = [current | cards]
 
-      cols = List.replace_at(cols, column, %{cards: cards, unplayed: unplayed})
+      cols = List.replace_at(cols, column, %{col | cards: cards})
 
       game
       |> Map.put(:cols, cols)

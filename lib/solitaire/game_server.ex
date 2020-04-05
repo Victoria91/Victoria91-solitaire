@@ -49,10 +49,7 @@ defmodule Solitaire.Game.Sever do
   end
 
   def handle_call(:change, _from, state) do
-    new_deck = Game.change(state) |> IO.inspect(label: "new_deck")
-    state |> IO.inspect(label: "STATE ON CHANGE")
-
-    new_state = Map.put(state, :deck, new_deck) |> put_deck_length
+    new_state = Map.put(state, :deck, Game.change(state)) |> put_deck_length
 
     check_length(state)
     {:reply, new_state, new_state}
@@ -63,8 +60,6 @@ defmodule Solitaire.Game.Sever do
         _from,
         state
       ) do
-    state |> IO.inspect(label: "STATE ON move_from_deck")
-
     result = Game.move_from_deck(state, column)
 
     new_state =
@@ -77,7 +72,6 @@ defmodule Solitaire.Game.Sever do
   end
 
   def handle_call({:move_from_column, from, to}, _from, state) do
-    state |> IO.inspect(label: "STATE ON move_from_column")
     {_, result} = Game.move_from_column(state, from, to)
 
     new_state =
@@ -109,7 +103,7 @@ defmodule Solitaire.Game.Sever do
   end
 
   defp put_deck_length(%{deck: deck} = state) do
-    deck_length = Enum.find_index(deck, &(&1 == [])) || 7
+    deck_length = Enum.find_index(deck, &(&1 == []))
     %{state | deck_length: deck_length}
   end
 

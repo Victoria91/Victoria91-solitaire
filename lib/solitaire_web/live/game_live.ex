@@ -22,9 +22,7 @@ defmodule SolitaireWeb.GameLive do
     {:noreply, new_socket}
   end
 
-  def handle_event("move", %{"column" => column} = params, socket) do
-    params |> IO.inspect()
-    column |> IO.inspect()
+  def handle_event("move", %{"column" => column}, socket) do
     {column, _} = Integer.parse(column)
 
     cond do
