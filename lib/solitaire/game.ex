@@ -4,7 +4,7 @@ defmodule Solitaire.Game do
   @black_suits ~w(spade club)
   @red_suits ~w(diamond heart)
   @suits ~w(spade diamond heart club)
-  @ranks ~w(2 3 4 5 6 7 8 9 10 J D K A)
+  @ranks ~w(A 2 3 4 5 6 7 8 9 10 J D K)
   @deck Enum.flat_map(@ranks, fn r -> Enum.map(@suits, fn s -> {s, r} end) end)
 
   defstruct cols: [],
@@ -30,7 +30,7 @@ defmodule Solitaire.Game do
   @doc """
     Берет следующую карту из колоды
   """
-  def change(%{deck: [h | [[] | t]]} = state) do
+  def change(%{deck: [h | [[] | t]]}) do
     current = t |> List.first() |> List.first()
     new_deck = (t ++ [h]) |> List.flatten() |> split_deck_by(3)
     new_deck = new_deck ++ [[]]
@@ -38,7 +38,7 @@ defmodule Solitaire.Game do
     {current, new_deck}
   end
 
-  def change(%{deck: [h | [ht | tt] = rest] = deck}) do
+  def change(%{deck: [h | [ht | _] = rest]}) do
     {hd(ht), rest ++ [h]}
   end
 
@@ -73,7 +73,7 @@ defmodule Solitaire.Game do
     %{cards: from_cards, unplayed: unplayed} = from_column
     %{cards: to_cards} = to_column
 
-    to = if to_cards != [], do: hd(to_cards), else: nil |> IO.inspect(label: "to")
+    to = List.first(to_cards) |> IO.inspect(label: "to")
 
     for_move_count = (length(from_cards) - unplayed) |> IO.inspect(label: "from count")
 
@@ -125,17 +125,28 @@ defmodule Solitaire.Game do
   defp maybe_decrease_unplayed(0), do: 0
   defp maybe_decrease_unplayed(unplayed), do: unplayed - 1
 
-  # defp maybe_decrease_unplayed(length_of_cards_rest, unplayed)
-  #      when length_of_cards_rest <= unplayed,
-  #      do: unplayed - 1
+  defp rest_deck([[h | t] | [[] | rest]]) do
+    IO.inspect("rest_deck11111")
+    {h, [t | rest] ++ [[]]}
+  end
 
-  # defp maybe_decrease_unplayed(_, unplayed), do: unplayed
+  defp rest_deck([[_current | []] | [[next | _rest] | _rest_cards] = rest_deck]) do
+    IO.inspect("rest_deck2222")
+
+    {next, rest_deck}
+  end
+
+  defp rest_deck([[_current | [next | _rest] = rest] | rest_deck]) do
+    IO.inspect("rest_deck333331")
+
+    {next, [rest | rest_deck]}
+  end
 
   def move_from_deck(
-        %{current: current, deck: [[current | [next | _] = rest] | rest_deck], cols: cols} = game,
+        %{current: current, deck: deck, cols: cols} = game,
         column
       ) do
-    deck = [rest | rest_deck]
+    {next, deck} = rest_deck(deck)
 
     %{cards: cards, unplayed: unplayed} = Enum.at(cols, column)
 
@@ -163,8 +174,6 @@ defmodule Solitaire.Game do
   defp can_move?({suit, _}, {suit, _}), do: false
 
   defp can_move?({_, rank}, {_, rank}), do: false
-
-  defp can_move?({_, "2"}, {_, "A"}), do: true
 
   # to, from
   defp can_move?({col_suit, col_rank}, {deck_suit, dec_rank}) do

@@ -68,7 +68,7 @@
 
     <div id="waste" class="waste pile" phx-click="move_from_deck" data-pile="waste" data-played="1" data-unplayed="0" style="height: 140px;">
       <ul>
-        <li class="card up" data-rank=<%= elem(@current,1) %> data-suit=<%= elem(@current,0) %> data-pile="waste" data-selected="false" data-played="true">
+        <li class="card up" data-rank=<%= elem(@current,1) %> data-suit=<%= elem(@current,0) %> data-pile="waste" data-selected="true" data-played="true">
           <div class="king <%= elem(@current,0) %>">
             <div class="corner top">
               <span class="grank"><%= elem(@current,1) %></span>

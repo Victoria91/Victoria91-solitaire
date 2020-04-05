@@ -49,26 +49,34 @@ defmodule Solitaire.Game.Sever do
   end
 
   def handle_call(:change, _from, state) do
-    IO.inspect("empty!!!")
-
-    {current, new_deck} = Game.change(state)
+    {current, new_deck} = Game.change(state) |> IO.inspect(label: "new_deck")
+    state |> IO.inspect(label: "STATE ON CHANGE")
 
     new_state =
       Map.put(state, :deck, new_deck) |> Map.put(:current, current) |> put_deck_length(new_deck)
 
+    check_length(state)
     {:reply, new_state, new_state}
   end
 
-  def handle_call(:change, _from, %{deck: [h | t]} = state) do
-    {current, new_deck} = Game.change(state)
+  def check_length(%{deck: deck, cols: cols}) do
+    cols_len =
+      cols
+      |> Enum.map(& &1[:cards])
+      |> Enum.map(&length/1)
+      |> Enum.reduce(&(&1 + &2))
 
-    new_state =
-      Map.put(state, :deck, new_deck)
-      |> Map.put(:current, current)
-      |> put_deck_length(new_deck)
-      |> IO.inspect(label: "new state")
+    deck_len =
+      deck
+      |> Enum.map(&length/1)
+      |> Enum.reduce(&(&1 + &2))
 
-    {:reply, new_state, new_state}
+    # |> IO.inspect(label: "LENGT deccJ")
+    if cols_len + deck_len != 52 |> IO.inspect(label: "length") do
+      raise "AOAOAOOO"
+    end
+
+    # (cols_len + deck_len) |> IO.inspect(label: "TOTOAL")
   end
 
   defp put_deck_length(state, deck) do
@@ -82,6 +90,7 @@ defmodule Solitaire.Game.Sever do
         state
       ) do
     # state |> IO.inspect(label: "state")
+    state |> IO.inspect(label: "STATE ON move_from_deck")
 
     result = Game.move_from_deck(state, column)
 
@@ -90,12 +99,15 @@ defmodule Solitaire.Game.Sever do
       |> Map.put(:deck, result.deck)
       |> Map.put(:current, result.current)
 
-    # |> IO.inspect(label: "new state")
+    check_length(new_state)
+
+    new_state |> IO.inspect(label: "RESULT STATE ON move_from_deck")
 
     {:reply, new_state, new_state}
   end
 
   def handle_call({:move_from_column, from, to}, _from, state) do
+    state |> IO.inspect(label: "STATE ON move_from_column")
     {_, result} = Game.move_from_column(state, from, to)
 
     new_state =
@@ -103,12 +115,15 @@ defmodule Solitaire.Game.Sever do
       |> Map.put(:deck, result.deck)
       |> Map.put(:current, result.current)
 
+    check_length(new_state)
+
     {:reply, new_state, new_state}
   end
 
   def handle_cast({:split_by, count}, %{deck: deck} = state) do
     [[current | _] | _] = splitted_deck = Game.split_deck_by(deck, count) ++ [[]]
     new_state = Map.put(state, :deck, splitted_deck) |> Map.put(:current, current)
+
     {:noreply, new_state}
   end
 
