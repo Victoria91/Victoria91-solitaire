@@ -26,6 +26,10 @@ defmodule Solitaire.Game.Sever do
     GenServer.cast(pid, {:split_by, 3})
   end
 
+  def move_to_foundation(pid, attr) do
+    GenServer.call(pid, {:move_to_foundation, attr})
+  end
+
   def change(pid) do
     GenServer.call(pid, :change)
   end
@@ -48,6 +52,20 @@ defmodule Solitaire.Game.Sever do
     {:reply, state, state}
   end
 
+  def handle_call({:move_to_foundation, attr}, _from, state) do
+    new_state = Game.move_to_foundation(state, attr)
+
+    new_state.foundation |> IO.inspect()
+
+    new_state =
+      Map.put(state, :deck, new_state.deck)
+      |> put_deck_length
+      |> Map.put(:foundation, new_state.foundation)
+      |> Map.put(:cols, new_state.cols)
+
+    {:reply, new_state, new_state}
+  end
+
   def handle_call(:change, _from, state) do
     new_state = Map.put(state, :deck, Game.change(state)) |> put_deck_length
 
@@ -60,15 +78,17 @@ defmodule Solitaire.Game.Sever do
         _from,
         state
       ) do
-    result = Game.move_from_deck(state, column)
+    if result = Game.move_from_deck(state, column) do
+      new_state =
+        Map.put(state, :cols, result.cols)
+        |> Map.put(:deck, result.deck)
 
-    new_state =
-      Map.put(state, :cols, result.cols)
-      |> Map.put(:deck, result.deck)
+      check_length(new_state)
 
-    check_length(new_state)
-
-    {:reply, new_state, new_state}
+      {:reply, new_state, new_state}
+    else
+      {:reply, state, state}
+    end
   end
 
   def handle_call({:move_from_column, from, to}, _from, state) do
@@ -108,19 +128,19 @@ defmodule Solitaire.Game.Sever do
   end
 
   def check_length(%{deck: deck, cols: cols}) do
-    cols_len =
-      cols
-      |> Enum.map(& &1[:cards])
-      |> Enum.map(&length/1)
-      |> Enum.reduce(&(&1 + &2))
+    # cols_len =
+    #   cols
+    #   |> Enum.map(& &1[:cards])
+    #   |> Enum.map(&length/1)
+    #   |> Enum.reduce(&(&1 + &2))
 
-    deck_len =
-      deck
-      |> Enum.map(&length/1)
-      |> Enum.reduce(&(&1 + &2))
+    # deck_len =
+    #   deck
+    #   |> Enum.map(&length/1)
+    #   |> Enum.reduce(&(&1 + &2))
 
-    if cols_len + deck_len != 52 |> IO.inspect(label: "length") do
-      raise "AOAOAOOO"
-    end
+    # if cols_len + deck_len != 52 |> IO.inspect(label: "length") do
+    #   raise "AOAOAOOO"
+    # end
   end
 end

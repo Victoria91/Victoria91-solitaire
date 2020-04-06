@@ -8,7 +8,7 @@ defmodule SolitaireWeb.GameLive do
 
   def mount(_params, _session, socket) do
     {:ok, pid} = GameServer.start_link([])
-    state = GameServer.state(pid)
+    state = GameServer.state(pid) |> IO.inspect(label: "STATE")
     socket = assign_game_state(socket, state, pid)
 
     {:ok, socket}
@@ -20,6 +20,27 @@ defmodule SolitaireWeb.GameLive do
     IO.inspect("SELECTED")
 
     {:noreply, new_socket}
+  end
+
+  def handle_event("put", _params, socket) do
+    pid = socket.assigns[:pid]
+
+    cond do
+      socket.assigns[:move_from_deck] ->
+        game = GameServer.move_to_foundation(pid, :deck) |> IO.inspect(label: "NEW SOCKT")
+        new_socket = assign_game_state(socket, game, pid)
+        {:noreply, new_socket}
+
+      from_column = socket.assigns[:move_from_column] ->
+        pid = socket.assigns.pid
+        state = GameServer.move_to_foundation(pid, from_column)
+        new_socket = assign_game_state(socket, state, pid) |> assign(:move_from_column, false)
+
+        {:noreply, new_socket}
+
+      true ->
+        {:noreply, socket}
+    end
   end
 
   def handle_event("move", %{"column" => column}, socket) do
@@ -61,6 +82,7 @@ defmodule SolitaireWeb.GameLive do
     assign(socket, :cols, state.cols)
     |> assign(:deck_length, state.deck_length)
     |> assign(:deck, state.deck)
+    |> assign(:foundation, state.foundation)
     |> assign(:pid, pid)
   end
 end

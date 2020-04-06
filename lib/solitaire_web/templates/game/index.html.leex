@@ -86,18 +86,22 @@
       </ul>
     </div>
     <ul id="fnd" class="fnd" data-played="0" data-unplayed="0">
-      <li id="spades" class="spades pile" data-pile="spades" data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;">
+      <%= Enum.map(~w(spade club diamond heart), fn suit -> %>
+        <li id=<%= "#{suit}<>s" %> class="<%= "#{suit}<>s" %> pile" data-pile=<%= "#{suit}<>s" %> data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;" phx-click="put">
+          <ul>
+            <%= render("fnd.html", foundation: @foundation[suit] |> IO.inspect(label: "SUIT"), suit: suit) %>
+          </ul>
+        </li>
+      <% end) %>
+      <%# <li id="hearts" class="hearts pile" data-pile="hearts" data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;" phx-click="put">
         <ul></ul>
       </li>
-      <li id="hearts" class="hearts pile" data-pile="hearts" data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;">
+      <li id="diamonds" class="diamonds pile" data-pile="diamonds" data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;" phx-click="put">
         <ul></ul>
       </li>
-      <li id="diamonds" class="diamonds pile" data-pile="diamonds" data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;">
+      <li id="clubs" class="clubs pile" data-pile="clubs" data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;" phx-click="put">
         <ul></ul>
-      </li>
-      <li id="clubs" class="clubs pile" data-pile="clubs" data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;">
-        <ul></ul>
-      </li>
+      </li> %>
     </ul>
   </div>
 

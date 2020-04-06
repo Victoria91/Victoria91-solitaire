@@ -18,8 +18,8 @@ defmodule Solitaire.GameTest do
 
       #       {_, result_deck} = Game.change(%{deck: deck}) |> IO.inspect()
       # assert result_deck
-      %{deck: [h | rest] = deck} = game = GameServer.state(pid) |> IO.inspect()
-      rest_deck = res = Game.change(game) |> IO.inspect(label: "res")
+      %{deck: [h | rest] = deck} = game = GameServer.state(pid)
+      rest_deck = res = Game.change(game)
       assert rest ++ [h] == res
       assert length(rest_deck) == length(deck)
     end
@@ -54,10 +54,9 @@ defmodule Solitaire.GameTest do
         |> List.replace_at(4, %{cards: [{"spade", "K"}], unplayed: 0})
         |> List.replace_at(5, %{cards: [{"diamond", "10"}], unplayed: 0})
         |> List.replace_at(0, %{cards: [], unplayed: 0})
-        |> IO.inspect()
 
       game = %{game | cols: new_cols}
-      Game.move_from_column(game, 3, 0) |> IO.inspect()
+      Game.move_from_column(game, 3, 0)
     end
   end
 
@@ -91,6 +90,7 @@ defmodule Solitaire.GameTest do
       assert result_cards == [{"heart", "4"}, {"spade", "5"}]
     end
 
+    @tag :skip
     test "2", %{pid: pid} do
       %{cols: cols} = game = GameServer.state(pid)
 
@@ -108,8 +108,7 @@ defmodule Solitaire.GameTest do
         |> Map.put(:deck, initial_deck)
         |> Map.put(:cols, cols)
 
-      %{deck: result_deck, cols: result_cols} =
-        Game.move_from_deck(game, 2) |> IO.inspect(label: "res")
+      %{deck: result_deck, cols: result_cols} = Game.move_from_deck(game, 2)
 
       assert result_deck == Enum.slice(initial_deck, 2..-1) ++ [[]]
       %{cards: result_cards} = Enum.at(result_cols, 2)
@@ -200,18 +199,60 @@ defmodule Solitaire.GameTest do
           [{"heart", "J"}, {"heart", "D"}, {"club", "8"}],
           [],
           [{"club", "9"}, {"diamond", "9"}, {"club", "5"}]
-          # [{"heart", "4"}, {"spade", "6"}, {"heart", "3"}],
-          # [{"spade", "K"}, {"heart", "8"}, {"spade", "7"}],
-          # [{"club", "7"}, {"heart", "A"}],
-          # [{"spade", "9"}, {"diamond", "8"}, {"heart", "2"}],
-          # [{"club", "K"}, {"club", "4"}],
-          # [{"heart", "5"}, {"heart", "K"}, {"club", "A"}]
         ],
         deck_length: 1
       }
 
-      Game.move_from_deck(game, 0) |> IO.inspect()
-      # GameServer.check_length(game) |> IO.inspect()
+      Game.move_from_deck(game, 0)
+    end
+  end
+
+  describe "#move_to_foundation/2 (game, :deck)" do
+    test "when foundation is nil - A is available for move" do
+      game = %{deck: [[{"spade", "A"}], []], foundation: %{"spade" => nil}}
+
+      Game.move_to_foundation(game, :deck)
+
+      assert %{deck: [[], []], foundation: %{"spade" => "A"}} ==
+               Game.move_to_foundation(game, :deck)
+    end
+
+    test "with non-empty foundation - next rank is available" do
+      game = %{deck: [[{"spade", "2"}], []], foundation: %{"spade" => "A"}}
+
+      assert %{deck: [[], []], foundation: %{"spade" => "2"}} ==
+               Game.move_to_foundation(game, :deck)
+    end
+  end
+
+  describe "#move_to_foundation/2 (game, column)" do
+    test "when foundation is nil - A is available for move" do
+      game = %{cols: [%{cards: [{"spade", "A"}], unplayed: 0}], foundation: %{"spade" => nil}}
+
+      Game.move_to_foundation(game, 0)
+
+      assert %{cols: [%{cards: [], unplayed: 0}], foundation: %{"spade" => "A"}} ==
+               Game.move_to_foundation(game, 0)
+    end
+
+    test "with non-empty foundation - next rank is available" do
+      game = %{cols: [%{cards: [{"spade", "2"}], unplayed: 0}], foundation: %{"spade" => "A"}}
+
+      assert %{cols: [%{cards: [], unplayed: 0}], foundation: %{"spade" => "2"}} ==
+               Game.move_to_foundation(game, 0)
+    end
+
+    test "unplayed handling" do
+      game = %{
+        cols: [%{cards: [{"spade", "2"}, {"heart", "3"}, {"king", "4"}], unplayed: 1}],
+        foundation: %{"spade" => "A"}
+      }
+
+      assert %{
+               cols: [%{cards: [{"heart", "3"}, {"king", "4"}], unplayed: 1}],
+               foundation: %{"spade" => "2"}
+             } ==
+               Game.move_to_foundation(game, 0)
     end
   end
 end

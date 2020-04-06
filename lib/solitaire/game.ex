@@ -9,7 +9,68 @@ defmodule Solitaire.Game do
 
   defstruct cols: [],
             deck: @deck,
-            deck_length: 8
+            deck_length: 8,
+            foundation: %{"spade" => nil, "diamond" => nil, "heart" => nil, "club" => nil}
+
+  def move_to_foundation(%{deck: deck, foundation: foundation} = game, :deck) do
+    {from_suit, from_rank} = current(deck) |> IO.inspect(label: "current")
+
+    foundation_card = Map.fetch!(foundation, from_suit)
+
+    cond do
+      foundation_card == nil && from_rank == "A" ->
+        move_from_deck_to_foundation(game, from_suit, from_rank)
+
+      rank_index(from_rank) - 1 ==
+          rank_index(foundation_card) ->
+        IO.inspect("CAN PUT TO FOUNDATION")
+
+        move_from_deck_to_foundation(game, from_suit, from_rank)
+
+      true ->
+        game
+    end
+  end
+
+  def move_to_foundation(%{cols: cols, foundation: foundation} = game, from_col_num) do
+    from_column = %{cards: [{from_suit, from_rank} | _]} = Enum.at(cols, from_col_num)
+
+    foundation_card = Map.fetch!(foundation, from_suit)
+
+    cond do
+      foundation_card == nil && from_rank == "A" ->
+        move_from_deck_to_foundation(game, from_suit, from_rank, from_column, from_col_num)
+
+      rank_index(from_rank) - 1 ==
+          rank_index(foundation_card) ->
+        move_from_deck_to_foundation(game, from_suit, from_rank, from_column, from_col_num)
+
+      true ->
+        game
+    end
+  end
+
+  defp move_from_deck_to_foundation(%{foundation: foundation, deck: deck} = game, suit, rank) do
+    game
+    |> Map.put(:foundation, %{foundation | suit => rank})
+    |> Map.put(:deck, rest_deck(deck))
+  end
+
+  defp move_from_deck_to_foundation(
+         %{foundation: foundation, cols: cols} = game,
+         suit,
+         rank,
+         from_column,
+         from_col_num
+       ) do
+    from_column = take_card_from_column(from_column)
+
+    new_cols = List.replace_at(cols, from_col_num, from_column)
+
+    game
+    |> Map.put(:foundation, %{foundation | suit => rank})
+    |> Map.put(:cols, new_cols)
+  end
 
   @doc "Возвращает перемешанную колоду карт"
   @spec shuffle :: Solitaire.Game.t()
@@ -76,7 +137,11 @@ defmodule Solitaire.Game do
     {cards_to_move, rest_cards} = Enum.split(from_cards, for_move_count)
 
     if can_move?(to, List.last(cards_to_move)) |> IO.inspect(label: "can move!!!") do
-      from_column = %{cards: rest_cards, unplayed: maybe_decrease_unplayed(unplayed)}
+      from_column = %{
+        cards: rest_cards,
+        unplayed: maybe_decrease_unplayed(length(rest_cards), unplayed)
+      }
+
       to_column = %{to_column | cards: cards_to_move ++ to_cards}
 
       new_cols =
@@ -97,7 +162,7 @@ defmodule Solitaire.Game do
        ) do
     %{cards: [from | _]} = from_column
     %{cards: to_cards} = to_column
-    to = if to_cards != [], do: hd(to_cards), else: nil |> IO.inspect(label: "to")
+    to = List.first(to_cards) |> IO.inspect(label: "to")
 
     if can_move?(to, from) |> IO.inspect(label: "CAN MOVE") do
       from_column = take_card_from_column(from_column)
@@ -113,11 +178,16 @@ defmodule Solitaire.Game do
   end
 
   defp take_card_from_column(%{cards: [_ | rest_cards], unplayed: unplayed}) do
-    %{cards: rest_cards, unplayed: maybe_decrease_unplayed(unplayed)}
+    %{cards: rest_cards, unplayed: maybe_decrease_unplayed(length(rest_cards), unplayed)}
   end
 
-  defp maybe_decrease_unplayed(0), do: 0
-  defp maybe_decrease_unplayed(unplayed), do: unplayed - 1
+  defp maybe_decrease_unplayed(_, 0), do: 0
+
+  defp maybe_decrease_unplayed(length_of_cards_rest, unplayed)
+       when length_of_cards_rest > unplayed,
+       do: unplayed
+
+  defp maybe_decrease_unplayed(_, unplayed), do: unplayed - 1
 
   defp rest_deck([[_h | t] | [[] | rest]]) do
     [t | rest] ++ [[]]
@@ -128,8 +198,6 @@ defmodule Solitaire.Game do
   end
 
   defp rest_deck([[_current | rest] | rest_deck]) do
-    IO.inspect("rest_deck333331")
-
     [rest | rest_deck]
   end
 
@@ -142,31 +210,38 @@ defmodule Solitaire.Game do
         %{deck: deck, cols: cols} = game,
         column
       ) do
-    current = current(deck)
+    if deck_non_empty?(deck) do
+      current = current(deck)
 
-    deck = rest_deck(deck)
+      deck = rest_deck(deck)
 
-    col = %{cards: cards} = Enum.at(cols, column)
+      col = %{cards: cards} = Enum.at(cols, column)
 
-    upper_card = List.first(cards)
+      upper_card = List.first(cards)
 
-    if can_move?(upper_card, current) do
-      cards = [current | cards]
+      if can_move?(upper_card, current) do
+        cards = [current | cards]
 
-      cols = List.replace_at(cols, column, %{col | cards: cards})
+        cols = List.replace_at(cols, column, %{col | cards: cards})
 
-      game
-      |> Map.put(:cols, cols)
-      |> Map.put(:deck, deck)
+        game
+        |> Map.put(:cols, cols)
+        |> Map.put(:deck, deck)
+      end
     else
-      IO.inspect("NOT VALID MOVE")
       game
     end
+  end
+
+  defp deck_non_empty?(deck) do
+    deck |> List.flatten() != []
   end
 
   defp can_move?(nil, {_, "K"}), do: true
 
   defp can_move?(nil, _), do: false
+
+  defp can_move?(_, nil), do: false
 
   defp can_move?({suit, _}, {suit, _}), do: false
 

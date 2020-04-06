@@ -1,0 +1,15 @@
+<%= if @foundation |> IO.inspect(label: "SPADE???") do %>
+<li class="card up" data-rank=<%= @foundation %> data-suit=<%= ["spade"] %>  data-pile="spades" data-selected="false" data-played="true">
+    <div class="ace <%= @suit %>">
+    <div class="corner top">
+    <span class="rank"><%= @foundation %></span>
+    <span class="suit"></span>
+    </div>
+    <span class="suit middle_center"></span>
+    <div class="corner bottom">
+    <span class="rank"><%= @foundation %></span>
+    <span class="suit"></span>
+    </div>
+    </div>
+</li>
+<% end %>
