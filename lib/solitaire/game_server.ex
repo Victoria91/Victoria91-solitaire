@@ -43,6 +43,10 @@ defmodule Solitaire.Game.Sever do
     GenServer.call(pid, {:move_from_column, from, to})
   end
 
+  def move_from_foundation(pid, suit, column) do
+    GenServer.call(pid, {:move_from_foundation, suit, column})
+  end
+
   def handle_continue(:give_cards, state) do
     Enum.each(0..6, fn el -> take_cards_to_col(self(), el) end)
     shuffle_cards_by_three(self())
@@ -51,6 +55,18 @@ defmodule Solitaire.Game.Sever do
 
   def handle_call(:state, _from, state) do
     {:reply, state, state}
+  end
+
+  def handle_call({:move_from_foundation, suit, column}, _from, state) do
+    new_state = Game.move_from_foundation(state, suit, column)
+
+    new_state =
+      state
+      |> put_deck_length
+      |> Map.put(:foundation, new_state.foundation)
+      |> Map.put(:cols, new_state.cols)
+
+    {:reply, new_state, new_state}
   end
 
   def handle_call({:move_to_foundation, attr}, _from, state) do
@@ -132,7 +148,7 @@ defmodule Solitaire.Game.Sever do
 
   def perform_autowin_maybe(game) do
     if Game.deck_empty?(game) and Game.cols_empty?(game) do
-      Game.perform_autowin(game)
+      Task.async(fn -> Game.perform_autowin(game) end)
     end
   end
 
@@ -142,6 +158,6 @@ defmodule Solitaire.Game.Sever do
   end
 
   def check_for_autowin(game) do
-    Task.async(fn -> perform_autowin_maybe(game) end)
+    perform_autowin_maybe(game)
   end
 end

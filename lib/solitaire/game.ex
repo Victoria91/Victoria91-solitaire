@@ -7,6 +7,10 @@ defmodule Solitaire.Game do
   @ranks ~w(A 2 3 4 5 6 7 8 9 10 J D K)
   @deck Enum.flat_map(@ranks, fn r -> Enum.map(@suits, fn s -> {s, r} end) end)
 
+  alias Solitaire.Game.Foundation
+
+  def ranks, do: @ranks
+
   defstruct cols: [],
             deck: @deck,
             deck_length: 8,
@@ -22,10 +26,10 @@ defmodule Solitaire.Game do
   def perform_autowin(%{cols: cols} = game) do
     cols
     |> Enum.with_index()
-    |> Enum.reduce(game, fn {col, index}, game ->
+    |> Enum.reduce(game, fn {_col, index}, game ->
       game = move_to_foundation(game, index)
       Phoenix.PubSub.broadcast(Solitaire.PubSub, "game", {:tick, game})
-      :timer.sleep(50)
+      :timer.sleep(40)
       game
     end)
     |> perform_autowin()
@@ -38,13 +42,13 @@ defmodule Solitaire.Game do
 
     cond do
       foundation_card == nil && from_rank == "A" ->
-        move_from_deck_to_foundation(game, from_suit, from_rank)
+        move_from_deck_to_foundation(game, from_suit)
 
       rank_index(from_rank) - 1 ==
           rank_index(foundation_card) ->
         IO.inspect("CAN PUT TO FOUNDATION")
 
-        move_from_deck_to_foundation(game, from_suit, from_rank)
+        move_from_deck_to_foundation(game, from_suit)
 
       true ->
         game
@@ -62,11 +66,11 @@ defmodule Solitaire.Game do
 
       cond do
         foundation_card == nil && from_rank == "A" ->
-          move_from_deck_to_foundation(game, from_suit, from_rank, from_column, from_col_num)
+          move_from_deck_to_foundation(game, from_suit, from_column, from_col_num)
 
         rank_index(from_rank) - 1 ==
             rank_index(foundation_card) ->
-          move_from_deck_to_foundation(game, from_suit, from_rank, from_column, from_col_num)
+          move_from_deck_to_foundation(game, from_suit, from_column, from_col_num)
 
         true ->
           game
@@ -76,16 +80,15 @@ defmodule Solitaire.Game do
     end
   end
 
-  defp move_from_deck_to_foundation(%{foundation: foundation, deck: deck} = game, suit, rank) do
+  defp move_from_deck_to_foundation(%{foundation: foundation, deck: deck} = game, suit) do
     game
-    |> Map.put(:foundation, %{foundation | suit => rank})
+    |> Map.put(:foundation, Foundation.push(foundation, suit))
     |> Map.put(:deck, rest_deck(deck))
   end
 
   defp move_from_deck_to_foundation(
          %{foundation: foundation, cols: cols} = game,
          suit,
-         rank,
          from_column,
          from_col_num
        ) do
@@ -94,7 +97,7 @@ defmodule Solitaire.Game do
     new_cols = List.replace_at(cols, from_col_num, from_column)
 
     game
-    |> Map.put(:foundation, %{foundation | suit => rank})
+    |> Map.put(:foundation, Foundation.push(foundation, suit))
     |> Map.put(:cols, new_cols)
   end
 
@@ -131,6 +134,26 @@ defmodule Solitaire.Game do
   @spec split_deck_by(list(tuple), pos_integer) :: [[any]]
   def split_deck_by(deck, count) do
     Enum.chunk_every(deck, count)
+  end
+
+  def move_from_foundation(%{cols: cols, foundation: foundation} = game, suit, to_col_num) do
+    from_rank = Map.fetch!(foundation, suit)
+    to_column = %{cards: [to | _] = cards} = Enum.at(cols, to_col_num)
+
+    if can_move?(to, {suit, from_rank}) do
+      new_cols =
+        List.replace_at(
+          cols,
+          to_col_num,
+          %{to_column | cards: [{suit, from_rank} | cards]}
+        )
+
+      game
+      |> Map.put(:cols, new_cols)
+      |> Map.put(:foundation, Foundation.pop(foundation, suit))
+    else
+      game
+    end
   end
 
   @spec move_from_column(%{cols: any}, integer, integer) ::
@@ -262,9 +285,10 @@ defmodule Solitaire.Game do
   def cols_empty?(%{cols: cols}), do: cols_empty?(cols)
 
   def cols_empty?(cols) do
-    unplayed = cols |> Enum.map(& &1.unplayed) |> Enum.uniq() == [0]
+    cols |> Enum.map(& &1.unplayed) |> Enum.uniq() == [0]
   end
 
+  @spec deck_empty?([any] | %{deck: [any] | %{deck: [any] | %{deck: [any] | map}}}) :: boolean
   def deck_empty?(%{deck: deck}), do: deck_empty?(deck)
 
   def deck_empty?(deck), do: !deck_non_empty?(deck)
