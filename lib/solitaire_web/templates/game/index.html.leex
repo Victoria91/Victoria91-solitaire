@@ -69,7 +69,7 @@
     <div id="waste" class="waste pile" phx-click="move_from_deck" data-pile="waste" data-played="1" data-unplayed="0" style="height: 140px;">
       <ul>
         <%= if current(@deck) do %>
-          <li class="card up" data-rank=<%= elem(current(@deck),1) %> data-suit=<%= elem(current(@deck),0) %> data-pile="waste" data-selected="true" data-played="true">
+          <li class="card up" data-rank=<%= elem(current(@deck),1) %> data-suit=<%= elem(current(@deck),0) %> data-pile="waste" data-selected=<%= @move_from_deck  %> data-played="true">
             <div class="king <%= elem(current(@deck),0) %>">
               <div class="corner top">
                 <span class="grank"><%= elem(current(@deck),1) %></span>
@@ -87,9 +87,9 @@
     </div>
     <ul id="fnd" class="fnd" data-played="0" data-unplayed="0">
       <%= Enum.map(~w(spade club diamond heart), fn suit -> %>
-        <li id=<%= suit<>"s" %> class="<%= "#{suit}<>s" %> pile" data-pile=<%= "#{suit}<>s" %> data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;" phx-click="put">
+        <li id=<%= suit<>"s" %> class="<%= "#{suit}<>s" %> pile" data-pile=<%= "#{suit}<>s" %> data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;" phx-click="put" phx-value-suit=<%= suit %> >
           <ul>
-            <%= render("fnd.html", foundation: @foundation[suit], suit: suit) %>
+            <%= render("fnd.html", foundation: @foundation[suit], suit: suit, pop: @pop) %>
           </ul>
         </li>
       <% end) %>
@@ -111,7 +111,7 @@
       
 
       <%= Enum.with_index(@cols) |> Enum.map(fn {col, index} -> %>
-        <%= render "column.html", col: col, index: index + 1 %>
+        <%= render "column.html", col: col, index: index + 1, move_from_column: @move_from_column %>
       <% end) %>
 
       <%# <li class="pile" data-pile="4" data-played="1" data-unplayed="3" style="height: 131.6px;">
