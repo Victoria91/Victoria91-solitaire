@@ -1,7 +1,7 @@
 <li class="card <%= if @played?, do: "up" %>" data-rank="<%= rank(@card) %>" data-suit="<%= suit(@card) %>" data-pile="tab" data-selected="false"
 data-played="false">
     <%= if @played? do %>
-        <div class="<%= "#{card_rank_class(@card)} #{suit(@card)}" |> IO.inspect %>">
+        <div class="<%= "#{card_rank_class(@card)} #{suit(@card)}" %>">
             <div class="corner top">
             <span class="rank"><%= rank(@card) %></span>
             <span class="suit"></span>

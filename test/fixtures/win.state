@@ -1,0 +1,67 @@
+Solitaire.Game{
+  cols: [
+    %{
+      cards: [
+        {"club", "6"},
+        {"heart", "7"},
+        {"spade", "8"},
+        {"heart", "9"},
+        {"club", "10"},
+        {"heart", "J"},
+        {"club", "D"},
+        {"diamond", "K"}
+      ],
+      unplayed: 0
+    },
+    %{
+      cards: [
+        {"club", "2"},
+        {"heart", "3"},
+        {"club", "4"},
+        {"diamond", "5"},
+        {"spade", "6"},
+        {"diamond", "7"},
+        {"club", "8"},
+        {"diamond", "9"},
+        {"spade", "10"},
+        {"diamond", "J"},
+        {"spade", "D"},
+        {"heart", "K"}
+      ],
+      unplayed: 0
+    },
+    %{
+      cards: [
+        {"diamond", "2"},
+        {"spade", "3"},
+        {"diamond", "4"},
+        {"spade", "5"},
+        {"diamond", "6"},
+        {"spade", "7"},
+        {"heart", "8"},
+        {"club", "9"},
+        {"diamond", "10"},
+        {"spade", "J"},
+        {"diamond", "D"},
+        {"spade", "K"}
+      ],
+      unplayed: 0
+    },
+    %{cards: [{"club", "3"}, {"heart", "4"}, {"club", "5"}], unplayed: 0},
+    %{cards: [{"heart", "6"}, {"club", "7"}, {"diamond", "8"}], unplayed: 0},
+    %{
+      cards: [
+        {"spade", "9"},
+        {"heart", "10"},
+        {"club", "J"},
+        {"heart", "D"},
+        {"club", "K"}
+      ],
+      unplayed: 0
+    },
+    %{cards: [{"diamond", "3"}, {"spade", "4"}, {"heart", "5"}], unplayed: 0}
+  ],
+  deck: [[], []],
+  deck_length: 2,
+  foundation: %{"club" => "A", "diamond" => "A", "heart" => "2", "spade" => "2"}
+}

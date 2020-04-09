@@ -12,6 +12,25 @@ defmodule Solitaire.Game do
             deck_length: 8,
             foundation: %{"spade" => nil, "diamond" => nil, "heart" => nil, "club" => nil}
 
+  def perform_autowin(
+        %{
+          foundation: %{"club" => "K", "diamond" => "K", "heart" => "K", "spade" => "K"}
+        } = game
+      ),
+      do: game
+
+  def perform_autowin(%{cols: cols} = game) do
+    cols
+    |> Enum.with_index()
+    |> Enum.reduce(game, fn {col, index}, game ->
+      game = move_to_foundation(game, index)
+      Phoenix.PubSub.broadcast(Solitaire.PubSub, "game", {:tick, game})
+      :timer.sleep(50)
+      game
+    end)
+    |> perform_autowin()
+  end
+
   def move_to_foundation(%{deck: deck, foundation: foundation} = game, :deck) do
     {from_suit, from_rank} = current(deck) |> IO.inspect(label: "current")
 
@@ -33,20 +52,27 @@ defmodule Solitaire.Game do
   end
 
   def move_to_foundation(%{cols: cols, foundation: foundation} = game, from_col_num) do
-    from_column = %{cards: [{from_suit, from_rank} | _]} = Enum.at(cols, from_col_num)
+    from_column = %{cards: cards} = Enum.at(cols, from_col_num)
 
-    foundation_card = Map.fetch!(foundation, from_suit)
+    card = List.first(cards)
 
-    cond do
-      foundation_card == nil && from_rank == "A" ->
-        move_from_deck_to_foundation(game, from_suit, from_rank, from_column, from_col_num)
+    if card do
+      {from_suit, from_rank} = card
+      foundation_card = Map.fetch!(foundation, from_suit)
 
-      rank_index(from_rank) - 1 ==
-          rank_index(foundation_card) ->
-        move_from_deck_to_foundation(game, from_suit, from_rank, from_column, from_col_num)
+      cond do
+        foundation_card == nil && from_rank == "A" ->
+          move_from_deck_to_foundation(game, from_suit, from_rank, from_column, from_col_num)
 
-      true ->
-        game
+        rank_index(from_rank) - 1 ==
+            rank_index(foundation_card) ->
+          move_from_deck_to_foundation(game, from_suit, from_rank, from_column, from_col_num)
+
+        true ->
+          game
+      end
+    else
+      game
     end
   end
 
@@ -232,6 +258,16 @@ defmodule Solitaire.Game do
       game
     end
   end
+
+  def cols_empty?(%{cols: cols}), do: cols_empty?(cols)
+
+  def cols_empty?(cols) do
+    unplayed = cols |> Enum.map(& &1.unplayed) |> Enum.uniq() == [0]
+  end
+
+  def deck_empty?(%{deck: deck}), do: deck_empty?(deck)
+
+  def deck_empty?(deck), do: !deck_non_empty?(deck)
 
   defp deck_non_empty?(deck) do
     deck |> List.flatten() != []

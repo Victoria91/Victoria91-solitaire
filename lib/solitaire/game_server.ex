@@ -16,6 +16,7 @@ defmodule Solitaire.Game.Sever do
   @spec init(any) :: {:ok, Game.t(), {:continue, :give_cards}}
   def init(_) do
     {:ok, Game.shuffle(), {:continue, :give_cards}}
+    # {:ok, %Game{}}
   end
 
   def take_cards_to_col(pid, col_num) do
@@ -63,13 +64,15 @@ defmodule Solitaire.Game.Sever do
       |> Map.put(:foundation, new_state.foundation)
       |> Map.put(:cols, new_state.cols)
 
+    check_for_autowin(new_state)
+
     {:reply, new_state, new_state}
   end
 
   def handle_call(:change, _from, state) do
     new_state = Map.put(state, :deck, Game.change(state)) |> put_deck_length
 
-    check_length(state)
+    check_for_autowin(state)
     {:reply, new_state, new_state}
   end
 
@@ -83,7 +86,7 @@ defmodule Solitaire.Game.Sever do
         Map.put(state, :cols, result.cols)
         |> Map.put(:deck, result.deck)
 
-      check_length(new_state)
+      check_for_autowin(new_state)
 
       {:reply, new_state, new_state}
     else
@@ -98,7 +101,7 @@ defmodule Solitaire.Game.Sever do
       Map.put(state, :cols, result.cols)
       |> Map.put(:deck, result.deck)
 
-    check_length(new_state)
+    check_for_autowin(new_state)
 
     {:reply, new_state, new_state}
   end
@@ -127,20 +130,18 @@ defmodule Solitaire.Game.Sever do
     %{state | deck_length: deck_length}
   end
 
-  def check_length(%{deck: deck, cols: cols}) do
-    # cols_len =
-    #   cols
-    #   |> Enum.map(& &1[:cards])
-    #   |> Enum.map(&length/1)
-    #   |> Enum.reduce(&(&1 + &2))
+  def perform_autowin_maybe(game) do
+    if Game.deck_empty?(game) and Game.cols_empty?(game) do
+      Game.perform_autowin(game)
+    end
+  end
 
-    # deck_len =
-    #   deck
-    #   |> Enum.map(&length/1)
-    #   |> Enum.reduce(&(&1 + &2))
+  def handle_info(msg, state) do
+    IO.inspect(msg)
+    {:noreply, state}
+  end
 
-    # if cols_len + deck_len != 52 |> IO.inspect(label: "length") do
-    #   raise "AOAOAOOO"
-    # end
+  def check_for_autowin(game) do
+    Task.async(fn -> perform_autowin_maybe(game) end)
   end
 end
