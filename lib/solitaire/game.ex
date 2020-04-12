@@ -87,18 +87,20 @@ defmodule Solitaire.Game do
   end
 
   defp move_from_deck_to_foundation(
-         %{foundation: foundation, cols: cols} = game,
+         %{foundation: foundation} = game,
          suit,
          from_column,
          from_col_num
        ) do
     from_column = take_card_from_column(from_column)
 
-    new_cols = List.replace_at(cols, from_col_num, from_column)
-
     game
     |> Map.put(:foundation, Foundation.push(foundation, suit))
-    |> Map.put(:cols, new_cols)
+    |> update_cols(from_col_num, from_column)
+  end
+
+  defp update_cols(%{cols: cols} = game, col_index, col_value) do
+    %{game | cols: List.replace_at(cols, col_index, col_value)}
   end
 
   @doc "Возвращает перемешанную колоду карт"
@@ -119,6 +121,7 @@ defmodule Solitaire.Game do
   @doc """
     Берет следующую карту из колоды
   """
+  @spec change(Game.t()) :: [tuple]
   def change(%{deck: [h | [[] | t]]}) do
     new_deck = (t ++ [h]) |> List.flatten() |> split_deck_by(3)
     new_deck ++ [[]]
@@ -141,16 +144,9 @@ defmodule Solitaire.Game do
     to_column = %{cards: [to | _] = cards} = Enum.at(cols, to_col_num)
 
     if can_move?(to, {suit, from_rank}) do
-      new_cols =
-        List.replace_at(
-          cols,
-          to_col_num,
-          %{to_column | cards: [{suit, from_rank} | cards]}
-        )
-
       game
-      |> Map.put(:cols, new_cols)
       |> Map.put(:foundation, Foundation.pop(foundation, suit))
+      |> update_cols(to_col_num, %{to_column | cards: [{suit, from_rank} | cards]})
     else
       game
     end
@@ -170,7 +166,7 @@ defmodule Solitaire.Game do
   end
 
   defp move_cards_from_column(
-         %{cols: cols} = game,
+         game,
          from_column,
          to_column,
          from_col_num,
@@ -193,17 +189,14 @@ defmodule Solitaire.Game do
 
       to_column = %{to_column | cards: cards_to_move ++ to_cards}
 
-      new_cols =
-        List.replace_at(cols, from_col_num, from_column) |> List.replace_at(to_col_num, to_column)
-
-      {:ok, %{game | cols: new_cols}}
+      {:ok, game |> update_cols(from_col_num, from_column) |> update_cols(to_col_num, to_column)}
     else
       {:error, game}
     end
   end
 
   defp move_one_card_from_column(
-         %{cols: cols} = game,
+         game,
          from_column,
          to_column,
          from_col_num,
@@ -217,10 +210,7 @@ defmodule Solitaire.Game do
       from_column = take_card_from_column(from_column)
       to_column = %{to_column | cards: [from | to_cards]}
 
-      new_cols =
-        List.replace_at(cols, from_col_num, from_column) |> List.replace_at(to_col_num, to_column)
-
-      {:ok, %{game | cols: new_cols}}
+      {:ok, game |> update_cols(from_col_num, from_column) |> update_cols(to_col_num, to_column)}
     else
       {:error, game}
     end
@@ -271,11 +261,11 @@ defmodule Solitaire.Game do
       if can_move?(upper_card, current) do
         cards = [current | cards]
 
-        cols = List.replace_at(cols, column, %{col | cards: cards})
-
         game
-        |> Map.put(:cols, cols)
+        |> update_cols(column, %{col | cards: cards})
         |> Map.put(:deck, deck)
+      else
+        game
       end
     else
       game

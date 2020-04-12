@@ -28,13 +28,13 @@ defmodule SolitaireWeb.ConnCase do
     end
   end
 
-  setup tags do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Solitaire.Repo)
+  # setup tags do
+  #   :ok = Ecto.Adapters.SQL.Sandbox.checkout(Solitaire.Repo)
 
-    unless tags[:async] do
-      Ecto.Adapters.SQL.Sandbox.mode(Solitaire.Repo, {:shared, self()})
-    end
+  #   unless tags[:async] do
+  #     Ecto.Adapters.SQL.Sandbox.mode(Solitaire.Repo, {:shared, self()})
+  #   end
 
-    {:ok, conn: Phoenix.ConnTest.build_conn()}
-  end
+  #   {:ok, conn: Phoenix.ConnTest.build_conn()}
+  # end
 end

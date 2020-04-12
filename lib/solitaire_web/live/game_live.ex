@@ -9,7 +9,8 @@ defmodule SolitaireWeb.GameLive do
   def mount(_params, _session, socket) do
     Phoenix.PubSub.subscribe(Solitaire.PubSub, "game")
     {:ok, pid} = GameServer.start_link([])
-    state = GameServer.state(pid) |> IO.inspect(label: "STATE")
+    state = GameServer.state(pid)
+    pid |> IO.inspect(label: "pid")
 
     socket =
       assign_game_state(socket, state, pid)
