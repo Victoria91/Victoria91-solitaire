@@ -58,27 +58,20 @@ defmodule Solitaire.Game.Sever do
   end
 
   def handle_call({:move_from_foundation, suit, column}, _from, state) do
-    new_state = Game.move_from_foundation(state, suit, column)
+    result = Game.move_from_foundation(state, suit, column)
 
     new_state =
       state
+      |> update_game_state(result)
       |> put_deck_length
-      |> Map.put(:foundation, new_state.foundation)
-      |> Map.put(:cols, new_state.cols)
 
     {:reply, new_state, new_state}
   end
 
   def handle_call({:move_to_foundation, attr}, _from, state) do
-    new_state = Game.move_to_foundation(state, attr)
+    result = Game.move_to_foundation(state, attr)
 
-    new_state.foundation |> IO.inspect()
-
-    new_state =
-      Map.put(state, :deck, new_state.deck)
-      |> put_deck_length
-      |> Map.put(:foundation, new_state.foundation)
-      |> Map.put(:cols, new_state.cols)
+    new_state = update_game_state(state, result)
 
     check_for_autowin(new_state)
 
@@ -86,7 +79,8 @@ defmodule Solitaire.Game.Sever do
   end
 
   def handle_call(:change, _from, state) do
-    new_state = Map.put(state, :deck, Game.change(state)) |> put_deck_length
+    result = Map.put(state, :deck, Game.change(state))
+    new_state = state |> update_game_state(result) |> put_deck_length
 
     check_for_autowin(state)
     {:reply, new_state, new_state}
@@ -97,25 +91,19 @@ defmodule Solitaire.Game.Sever do
         _from,
         state
       ) do
-    if result = Game.move_from_deck(state, column) do
-      new_state =
-        Map.put(state, :cols, result.cols)
-        |> Map.put(:deck, result.deck)
+    result = Game.move_from_deck(state, column)
 
-      check_for_autowin(new_state)
+    new_state = update_game_state(state, result)
 
-      {:reply, new_state, new_state}
-    else
-      {:reply, state, state}
-    end
+    check_for_autowin(new_state)
+
+    {:reply, new_state, new_state}
   end
 
   def handle_call({:move_from_column, from, to}, _from, state) do
     {_, result} = Game.move_from_column(state, from, to)
 
-    new_state =
-      Map.put(state, :cols, result.cols)
-      |> Map.put(:deck, result.deck)
+    new_state = update_game_state(state, result)
 
     check_for_autowin(new_state)
 
@@ -144,6 +132,13 @@ defmodule Solitaire.Game.Sever do
   defp put_deck_length(%{deck: deck} = state) do
     deck_length = Enum.find_index(deck, &(&1 == []))
     %{state | deck_length: deck_length}
+  end
+
+  defp update_game_state(state, result) do
+    state
+    |> Map.put(:cols, result.cols)
+    |> Map.put(:deck, result.deck)
+    |> Map.put(:foundation, result.foundation)
   end
 
   def perform_autowin_maybe(game) do
