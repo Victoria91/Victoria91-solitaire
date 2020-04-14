@@ -7,8 +7,9 @@ defmodule SolitaireWeb.GameLive do
   end
 
   def mount(_params, _session, socket) do
-    Phoenix.PubSub.subscribe(Solitaire.PubSub, "game")
     {:ok, pid} = GameServer.start_link([])
+    Phoenix.PubSub.subscribe(Solitaire.PubSub, "game:#{inspect(pid)}")
+
     state = GameServer.state(pid)
     pid |> IO.inspect(label: "pid")
 
@@ -34,7 +35,7 @@ defmodule SolitaireWeb.GameLive do
 
     cond do
       socket.assigns[:move_from_deck] ->
-        game = GameServer.move_to_foundation(pid, :deck) |> IO.inspect(label: "NEW SOCKT")
+        game = GameServer.move_to_foundation(pid, :deck)
         new_socket = assign_game_state(socket, game, pid)
         {:noreply, new_socket}
 

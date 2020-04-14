@@ -13,6 +13,10 @@ defmodule Solitaire.Game.Sever do
     GenServer.call(pid, :state)
   end
 
+  def state(pid, state) do
+    GenServer.cast(pid, {:state, state})
+  end
+
   @spec init(any) :: {:ok, Game.t(), {:continue, :give_cards}}
   def init(_) do
     {:ok, Game.shuffle(), {:continue, :give_cards}}
@@ -117,6 +121,10 @@ defmodule Solitaire.Game.Sever do
     {:noreply, new_state}
   end
 
+  def handle_cast({:state, new_state}, _) do
+    {:noreply, new_state}
+  end
+
   def handle_cast({:set_col, col_num}, %{deck: deck, cols: cols} = state) do
     {cards, rest} = Game.take_card_from_deck(deck, col_num + 1)
 
@@ -152,6 +160,7 @@ defmodule Solitaire.Game.Sever do
     {:noreply, state}
   end
 
+  @spec check_for_autowin([any] | %{deck: [any] | %{deck: [any] | map}}) :: nil | Task.t()
   def check_for_autowin(game) do
     perform_autowin_maybe(game)
   end

@@ -36,22 +36,25 @@ defmodule Solitaire.Game do
   end
 
   def move_to_foundation(%{deck: deck, foundation: foundation} = game, :deck) do
-    {from_suit, from_rank} = current(deck) |> IO.inspect(label: "current")
+    if current = current(deck) do
+      {from_suit, from_rank} = current
+      foundation_card = Map.fetch!(foundation, from_suit)
 
-    foundation_card = Map.fetch!(foundation, from_suit)
+      cond do
+        foundation_card == nil && from_rank == "A" ->
+          move_from_deck_to_foundation(game, from_suit)
 
-    cond do
-      foundation_card == nil && from_rank == "A" ->
-        move_from_deck_to_foundation(game, from_suit)
+        rank_index(from_rank) - 1 ==
+            rank_index(foundation_card) ->
+          IO.inspect("CAN PUT TO FOUNDATION")
 
-      rank_index(from_rank) - 1 ==
-          rank_index(foundation_card) ->
-        IO.inspect("CAN PUT TO FOUNDATION")
+          move_from_deck_to_foundation(game, from_suit)
 
-        move_from_deck_to_foundation(game, from_suit)
-
-      true ->
-        game
+        true ->
+          game
+      end
+    else
+      game
     end
   end
 
@@ -227,6 +230,14 @@ defmodule Solitaire.Game do
        do: unplayed
 
   defp maybe_decrease_unplayed(_, unplayed), do: unplayed - 1
+
+  defp rest_deck([[], [], rest]) do
+    rest_deck([[] | rest])
+  end
+
+  defp rest_deck([[], [_h | t] | rest]) do
+    [t | rest] ++ [[]]
+  end
 
   defp rest_deck([[_h | t] | [[] | rest]]) do
     [t | rest] ++ [[]]
