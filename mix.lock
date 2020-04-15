@@ -23,5 +23,7 @@
   "postgrex": {:hex, :postgrex, "0.15.3", "5806baa8a19a68c4d07c7a624ccdb9b57e89cbc573f1b98099e3741214746ae4", [:mix], [{:connection, "~> 1.0", [hex: :connection, repo: "hexpm", optional: false]}, {:db_connection, "~> 2.1", [hex: :db_connection, repo: "hexpm", optional: false]}, {:decimal, "~> 1.5", [hex: :decimal, repo: "hexpm", optional: false]}, {:jason, "~> 1.0", [hex: :jason, repo: "hexpm", optional: true]}], "hexpm", "4737ce62a31747b4c63c12b20c62307e51bb4fcd730ca0c32c280991e0606c90"},
   "ranch": {:hex, :ranch, "1.7.1", "6b1fab51b49196860b733a49c07604465a47bdb78aa10c1c16a3d199f7f8c881", [:rebar3], [], "hexpm", "451d8527787df716d99dc36162fca05934915db0b6141bbdac2ea8d3c7afc7d7"},
   "recon": {:hex, :recon, "2.5.0", "2f7fcbec2c35034bade2f9717f77059dc54eb4e929a3049ca7ba6775c0bd66cd", [:mix, :rebar3], [], "hexpm", "72f3840fedd94f06315c523f6cecf5b4827233bed7ae3fe135b2a0ebeab5e196"},
+  "statix": {:hex, :statix, "1.4.0", "c822abd1e60e62828e8460e932515d0717aa3c089b44cc3f795d43b94570b3a8", [:mix], [], "hexpm", "507373cc80925a9b6856cb14ba17f6125552434314f6613c907d295a09d1a375"},
+  "statsd_logger": {:hex, :statsd_logger, "1.1.1", "352647f4bc41d7a5d4992662f8b99612fff348dac2291bde456c4a64d8ff63c2", [:mix], [], "hexpm", "1dc8b958cafdf4d36434b48d2240419cea240b646cc29fdce7229c9d01f525fb"},
   "telemetry": {:hex, :telemetry, "0.4.1", "ae2718484892448a24470e6aa341bc847c3277bfb8d4e9289f7474d752c09c7f", [:rebar3], [], "hexpm", "4738382e36a0a9a2b6e25d67c960e40e1a2c95560b9f936d8e29de8cd858480f"},
 }

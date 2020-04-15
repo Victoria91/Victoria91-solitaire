@@ -1,20 +1,25 @@
 defmodule Solitaire.Game.Sever do
   use GenServer
 
-  alias Solitaire.Game
+  alias Solitaire.{Game, Statix}
 
   @spec start_link(any) :: :ignore | {:error, any} | {:ok, pid}
   def start_link(_) do
+    # Statix.increment("games")
     GenServer.start_link(__MODULE__, [])
   end
 
   @spec state(atom | pid | {atom, any} | {:via, atom, any}) :: any
   def state(pid) do
-    GenServer.call(pid, :state)
+    measure("get_state", fn ->
+      GenServer.call(pid, :state)
+    end)
   end
 
   def state(pid, state) do
-    GenServer.cast(pid, {:state, state})
+    measure("set state", fn ->
+      GenServer.cast(pid, {:state, state})
+    end)
   end
 
   @spec init(any) :: {:ok, Game.t(), {:continue, :give_cards}}
@@ -32,15 +37,29 @@ defmodule Solitaire.Game.Sever do
   end
 
   def move_to_foundation(pid, attr) do
-    GenServer.call(pid, {:move_to_foundation, attr})
+    measure("move_to_foundation", fn ->
+      GenServer.call(pid, {:move_to_foundation, attr})
+    end)
+  end
+
+  defp measure(label, fun) do
+    if Application.get_env(:statsd_logger, :enable) do
+      Statix.measure(label, fun)
+    else
+      fun.()
+    end
   end
 
   def change(pid) do
-    GenServer.call(pid, :change)
+    measure("chanfe", fn ->
+      GenServer.call(pid, :change)
+    end)
   end
 
   def move_from_deck(pid, column) do
-    GenServer.call(pid, {:move_from_deck, column})
+    measure("move_from_deck", fn ->
+      GenServer.call(pid, {:move_from_deck, column})
+    end)
   end
 
   def move_from_column(pid, from, to) do
@@ -48,12 +67,13 @@ defmodule Solitaire.Game.Sever do
   end
 
   def move_from_foundation(pid, suit, column) do
-    GenServer.call(pid, {:move_from_foundation, suit, column})
+    measure("move_from_foundation", fn ->
+      GenServer.call(pid, {:move_from_foundation, suit, column})
+    end)
   end
 
-  def handle_continue(:give_cards, state) do
-    Enum.each(0..6, fn el -> take_cards_to_col(self(), el) end)
-    shuffle_cards_by_three(self())
+  def handle_continue(:give_cards, _state) do
+    state = Game.load_game()
     {:noreply, state}
   end
 
@@ -114,26 +134,7 @@ defmodule Solitaire.Game.Sever do
     {:reply, new_state, new_state}
   end
 
-  def handle_cast({:split_by, count}, %{deck: deck} = state) do
-    splitted_deck = Game.split_deck_by(deck, count) ++ [[]]
-    new_state = Map.put(state, :deck, splitted_deck)
-
-    {:noreply, new_state}
-  end
-
   def handle_cast({:state, new_state}, _) do
-    {:noreply, new_state}
-  end
-
-  def handle_cast({:set_col, col_num}, %{deck: deck, cols: cols} = state) do
-    {cards, rest} = Game.take_card_from_deck(deck, col_num + 1)
-
-    new_state =
-      Map.merge(state, %{
-        deck: rest,
-        cols: List.insert_at(cols, col_num, %{cards: cards, unplayed: col_num})
-      })
-
     {:noreply, new_state}
   end
 
@@ -147,6 +148,7 @@ defmodule Solitaire.Game.Sever do
     |> Map.put(:cols, result.cols)
     |> Map.put(:deck, result.deck)
     |> Map.put(:foundation, result.foundation)
+    |> IO.inspect()
   end
 
   def perform_autowin_maybe(game) do

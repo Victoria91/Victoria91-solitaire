@@ -6,6 +6,7 @@ defmodule Solitaire.Application do
   use Application
 
   def start(_type, _args) do
+    :ok = Solitaire.Statix.connect()
     # List all child processes to be supervised
     children = [
       # Start the Ecto repository

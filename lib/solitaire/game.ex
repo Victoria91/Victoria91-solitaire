@@ -16,6 +16,22 @@ defmodule Solitaire.Game do
             deck_length: 8,
             foundation: %{"spade" => nil, "diamond" => nil, "heart" => nil, "club" => nil}
 
+  def load_game do
+    game =
+      %{deck: rest_deck} =
+      Enum.reduce(0..6, shuffle(), fn i, game -> take_cards_to_col(game, i) end)
+
+    Map.put(game, :deck, split_deck_by(rest_deck, 3) ++ [[]])
+  end
+
+  defp take_cards_to_col(%{deck: deck, cols: cols} = game, col_num) do
+    {cards, rest} = take_card_from_deck(deck, col_num + 1)
+
+    game
+    |> Map.put(:deck, rest)
+    |> Map.put(:cols, List.insert_at(cols, col_num, %{cards: cards, unplayed: col_num}))
+  end
+
   def perform_autowin(
         %{
           foundation: %{"club" => "K", "diamond" => "K", "heart" => "K", "spade" => "K"}
@@ -46,8 +62,6 @@ defmodule Solitaire.Game do
 
         rank_index(from_rank) - 1 ==
             rank_index(foundation_card) ->
-          IO.inspect("CAN PUT TO FOUNDATION")
-
           move_from_deck_to_foundation(game, from_suit)
 
         true ->
@@ -180,11 +194,11 @@ defmodule Solitaire.Game do
 
     to = List.first(to_cards) |> IO.inspect(label: "to")
 
-    for_move_count = (length(from_cards) - unplayed) |> IO.inspect(label: "from count")
+    for_move_count = length(from_cards) - unplayed
 
     {cards_to_move, rest_cards} = Enum.split(from_cards, for_move_count)
 
-    if can_move?(to, List.last(cards_to_move)) |> IO.inspect(label: "can move!!!") do
+    if can_move?(to, List.last(cards_to_move)) do
       from_column = %{
         cards: rest_cards,
         unplayed: maybe_decrease_unplayed(length(rest_cards), unplayed)
@@ -263,10 +277,10 @@ defmodule Solitaire.Game do
     if deck_non_empty?(deck) do
       current = current(deck)
 
+      deck |> IO.inspect(label: "before rest call")
       deck = rest_deck(deck)
 
       col = %{cards: cards} = Enum.at(cols, column)
-
       upper_card = List.first(cards)
 
       if can_move?(upper_card, current) do
