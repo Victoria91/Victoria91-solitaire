@@ -5,8 +5,7 @@ defmodule Solitaire.Game.Sever do
 
   @spec start_link(any) :: :ignore | {:error, any} | {:ok, pid}
   def start_link(_) do
-    # Statix.increment("games")
-    GenServer.start_link(__MODULE__, [])
+    GenServer.start_link(__MODULE__, [], spawn_opt: [fullsweep_after: 20])
   end
 
   @spec state(atom | pid | {atom, any} | {:via, atom, any}) :: any
@@ -24,16 +23,7 @@ defmodule Solitaire.Game.Sever do
 
   @spec init(any) :: {:ok, Game.t(), {:continue, :give_cards}}
   def init(_) do
-    {:ok, Game.shuffle(), {:continue, :give_cards}}
-    # {:ok, %Game{}}
-  end
-
-  def take_cards_to_col(pid, col_num) do
-    GenServer.cast(pid, {:set_col, col_num})
-  end
-
-  def shuffle_cards_by_three(pid) do
-    GenServer.cast(pid, {:split_by, 3})
+    {:ok, %{}, {:continue, :give_cards}}
   end
 
   def move_to_foundation(pid, attr) do
@@ -148,7 +138,6 @@ defmodule Solitaire.Game.Sever do
     |> Map.put(:cols, result.cols)
     |> Map.put(:deck, result.deck)
     |> Map.put(:foundation, result.foundation)
-    |> IO.inspect()
   end
 
   def perform_autowin_maybe(game) do

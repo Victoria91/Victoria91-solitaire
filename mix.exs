@@ -46,7 +46,9 @@ defmodule Solitaire.MixProject do
       {:phoenix_live_view,
        github: "phoenixframework/phoenix_live_view",
        ref: "e3dc2bd5eb177dd0002c96a4e58fe596c1a8ebf2"},
-      {:observer_cli, "~> 1.5"}
+      {:observer_cli, "~> 1.5"},
+      {:statix, "~> 1.2"},
+      {:statsd_logger, "~> 1.1", only: [:dev, :test]}
     ]
   end
 

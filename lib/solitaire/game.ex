@@ -245,20 +245,16 @@ defmodule Solitaire.Game do
 
   defp maybe_decrease_unplayed(_, unplayed), do: unplayed - 1
 
-  defp rest_deck([[], [], rest]) do
-    rest_deck([[] | rest])
-  end
-
   defp rest_deck([[], [_h | t] | rest]) do
-    [t | rest] ++ [[]]
-  end
-
-  defp rest_deck([[_h | t] | [[] | rest]]) do
     [t | rest] ++ [[]]
   end
 
   defp rest_deck([[_current | []] | rest_deck]) do
     rest_deck
+  end
+
+  defp rest_deck([[_h | t] | [[] | rest]]) do
+    [t | rest] ++ [[]]
   end
 
   defp rest_deck([[_current | rest] | rest_deck]) do
@@ -277,7 +273,6 @@ defmodule Solitaire.Game do
     if deck_non_empty?(deck) do
       current = current(deck)
 
-      deck |> IO.inspect(label: "before rest call")
       deck = rest_deck(deck)
 
       col = %{cards: cards} = Enum.at(cols, column)

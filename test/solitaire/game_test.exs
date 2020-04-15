@@ -10,14 +10,6 @@ defmodule Solitaire.GameTest do
     end
 
     test "changes - next cards move to top, current cards - to the end of the queue", %{pid: pid} do
-      #       deck = [
-      #         [{"diamond", "5"}, {"club", "6"}, {"diamond", "A"}],
-      #         [{"spade", "3"}, {"diamond", "K"}, {"club", "A"}],
-      #         []
-      #       ]
-
-      #       {_, result_deck} = Game.change(%{deck: deck}) |> IO.inspect()
-      # assert result_deck
       %{deck: [h | rest] = deck} = game = GameServer.state(pid)
       rest_deck = res = Game.change(game)
       assert rest ++ [h] == res
@@ -90,7 +82,7 @@ defmodule Solitaire.GameTest do
       assert result_cards == [{"heart", "4"}, {"spade", "5"}]
     end
 
-    @tag :skip
+    # @tag :skip
     test "2", %{pid: pid} do
       %{cols: cols} = game = GameServer.state(pid)
 
@@ -109,8 +101,7 @@ defmodule Solitaire.GameTest do
         |> Map.put(:cols, cols)
 
       %{deck: result_deck, cols: result_cols} = Game.move_from_deck(game, 2)
-
-      assert result_deck == Enum.slice(initial_deck, 2..-1) ++ [[]]
+      assert result_deck == Enum.slice(initial_deck, 1..-1)
       %{cards: result_cards} = Enum.at(result_cols, 2)
       assert result_cards == [{"heart", "4"}, {"spade", "5"}]
     end
@@ -213,14 +204,14 @@ defmodule Solitaire.GameTest do
 
       Game.move_to_foundation(game, :deck)
 
-      assert %{deck: [[], []], foundation: %{"spade" => "A"}} ==
+      assert %{deck: [[]], foundation: %{"spade" => "A"}} ==
                Game.move_to_foundation(game, :deck)
     end
 
     test "with non-empty foundation - next rank is available" do
       game = %{deck: [[{"spade", "2"}], []], foundation: %{"spade" => "A"}}
 
-      assert %{deck: [[], []], foundation: %{"spade" => "2"}} ==
+      assert %{deck: [[]], foundation: %{"spade" => "2"}} ==
                Game.move_to_foundation(game, :deck)
     end
   end
