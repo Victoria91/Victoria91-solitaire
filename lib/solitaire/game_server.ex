@@ -15,12 +15,6 @@ defmodule Solitaire.Game.Sever do
     end)
   end
 
-  def state(pid, state) do
-    measure("set state", fn ->
-      GenServer.cast(pid, {:state, state})
-    end)
-  end
-
   @spec init(any) :: {:ok, Game.t(), {:continue, :give_cards}}
   def init(_) do
     {:ok, %{}, {:continue, :give_cards}}
@@ -63,8 +57,10 @@ defmodule Solitaire.Game.Sever do
   end
 
   def handle_continue(:give_cards, _state) do
-    state = Game.load_game()
-    {:noreply, state}
+    measure("give_cards", fn ->
+      state = Game.load_game()
+      {:noreply, state}
+    end)
   end
 
   def handle_call(:state, _from, state) do
@@ -124,10 +120,6 @@ defmodule Solitaire.Game.Sever do
     {:reply, new_state, new_state}
   end
 
-  def handle_cast({:state, new_state}, _) do
-    {:noreply, new_state}
-  end
-
   defp put_deck_length(%{deck: deck} = state) do
     deck_length = Enum.find_index(deck, &(&1 == []))
     %{state | deck_length: deck_length}
@@ -140,9 +132,9 @@ defmodule Solitaire.Game.Sever do
     |> Map.put(:foundation, result.foundation)
   end
 
-  def perform_autowin_maybe(game) do
+  def perform_autowin_maybe(game, pid) do
     if Game.deck_empty?(game) and Game.cols_empty?(game) do
-      Task.async(fn -> Game.perform_autowin(game) end)
+      Task.async(fn -> Solitaire.Game.Autoplayer.perform_autowin(game, pid) end)
     end
   end
 
@@ -153,6 +145,6 @@ defmodule Solitaire.Game.Sever do
 
   @spec check_for_autowin([any] | %{deck: [any] | %{deck: [any] | map}}) :: nil | Task.t()
   def check_for_autowin(game) do
-    perform_autowin_maybe(game)
+    perform_autowin_maybe(game, self())
   end
 end

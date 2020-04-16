@@ -1,54 +1,76 @@
 defmodule Solitaire.Game.Autoplayer do
-  alias Solitaire.Game
   alias Solitaire.Game.Sever, as: GameServer
 
   def start do
+    # Task.async(fn ->
     {:ok, pid} = GameServer.start_link([])
-
-    Task.async(fn ->
-      state = GameServer.state(pid)
-
-      perform_autowin(state, pid)
-    end)
+    # :timer.sleep(:rand.uniform(1_000_000))
+    state = GameServer.state(pid)
+    play(state, pid)
+    # end)
   end
 
+  @doc "Автобой"
+  def play(
+        %{
+          foundation: %{"club" => "K", "diamond" => "K", "heart" => "K", "spade" => "K"}
+        } = game,
+        _pid,
+        _
+      ),
+      do: game
+
+  def play(game, _pid, 0), do: game
+
+  def play(%{cols: cols}, pid, count \\ 50) do
+    GameServer.move_to_foundation(pid, :deck)
+
+    cols
+    |> Enum.with_index()
+    |> Enum.each(fn {_col, index} ->
+      GameServer.move_to_foundation(pid, :deck)
+
+      GameServer.move_from_deck(pid, index)
+
+      GameServer.move_to_foundation(pid, index)
+
+      game = GameServer.state(pid)
+      broadcast_to_game_topic(pid, game)
+    end)
+
+    new_game = GameServer.change(pid)
+
+    broadcast_to_game_topic(pid, new_game)
+
+    play(new_game, pid, count - 1)
+  end
+
+  @doc """
+    Автоматически раскладывает оставшиеся карты на столе (вызывается когда колода пуста
+    и все карты на столе открыты). Бродкастит сообщение для liveview для обновления стола
+    на фронте
+  """
   def perform_autowin(
         %{
           foundation: %{"club" => "K", "diamond" => "K", "heart" => "K", "spade" => "K"}
         } = game,
-        pid,
-        _
+        _pid
       ),
-      do: update_game_server_state(pid, game)
+      do: game
 
-  def perform_autowin(game, pid, 0), do: update_game_server_state(pid, game)
-
-  def perform_autowin(%{cols: cols} = game, pid, count \\ 50) do
-    new_game = Game.move_to_foundation(game, :deck)
-
-    new_game =
-      cols
-      |> Enum.with_index()
-      |> Enum.reduce(game, fn {_col, index}, game ->
-        game =
-          Game.move_to_foundation(game, :deck)
-          |> Game.move_from_deck(index)
-          |> Game.move_to_foundation(index)
-
-        Phoenix.PubSub.broadcast(Solitaire.PubSub, "game", {:tick, game})
-        :timer.sleep(40)
-        game
-      end)
-
-    new_game = Map.put(new_game, :deck, Game.change(new_game))
-    Phoenix.PubSub.broadcast(Solitaire.PubSub, "game", {:tick, new_game})
-
-    update_game_server_state(pid, game)
-
-    perform_autowin(new_game, pid, count - 1)
+  def perform_autowin(%{cols: cols} = game, pid) do
+    cols
+    |> Enum.with_index()
+    |> Enum.reduce(game, fn {_col, index}, game ->
+      game = GameServer.move_to_foundation(pid, index)
+      broadcast_to_game_topic(pid, game)
+      :timer.sleep(40)
+      game
+    end)
+    |> perform_autowin(pid)
   end
 
-  defp update_game_server_state(pid, state) do
-    GameServer.state(pid, state)
+  defp broadcast_to_game_topic(pid, game) do
+    Phoenix.PubSub.broadcast(Solitaire.PubSub, "game:#{inspect(pid)}", {:tick, game})
   end
 end

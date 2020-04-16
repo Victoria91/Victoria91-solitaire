@@ -55,7 +55,7 @@
         <span></span>
       </i>
       <ul>
-        <%= if Enum.at(@deck, 1) != [] do %>
+        <%= if Enum.at(@deck, 1) != [] && @deck != [[]] do %>
           <li class="card" data-pile="stock" data-selected="false">
           </li>
           <%=  Enum.map(1 .. @deck_length, fn  _ -> %>

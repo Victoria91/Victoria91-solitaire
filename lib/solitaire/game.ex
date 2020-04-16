@@ -32,25 +32,6 @@ defmodule Solitaire.Game do
     |> Map.put(:cols, List.insert_at(cols, col_num, %{cards: cards, unplayed: col_num}))
   end
 
-  def perform_autowin(
-        %{
-          foundation: %{"club" => "K", "diamond" => "K", "heart" => "K", "spade" => "K"}
-        } = game
-      ),
-      do: game
-
-  def perform_autowin(%{cols: cols} = game) do
-    cols
-    |> Enum.with_index()
-    |> Enum.reduce(game, fn {_col, index}, game ->
-      game = move_to_foundation(game, index)
-      Phoenix.PubSub.broadcast(Solitaire.PubSub, "game", {:tick, game})
-      :timer.sleep(40)
-      game
-    end)
-    |> perform_autowin()
-  end
-
   def move_to_foundation(%{deck: deck, foundation: foundation} = game, :deck) do
     if current = current(deck) do
       {from_suit, from_rank} = current
