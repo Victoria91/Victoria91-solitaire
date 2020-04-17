@@ -50,7 +50,8 @@ defmodule Solitaire.Game.Autoplayer do
     и все карты на столе открыты). Бродкастит сообщение для liveview для обновления стола
     на фронте
   """
-  def perform_autowin(
+
+  def perform_automove_to_foundation(
         %{
           foundation: %{"club" => "K", "diamond" => "K", "heart" => "K", "spade" => "K"}
         } = game,
@@ -58,16 +59,24 @@ defmodule Solitaire.Game.Autoplayer do
       ),
       do: game
 
-  def perform_autowin(%{cols: cols} = game, pid) do
-    cols
-    |> Enum.with_index()
-    |> Enum.reduce(game, fn {_col, index}, game ->
-      game = GameServer.move_to_foundation(pid, index)
-      broadcast_to_game_topic(pid, game)
-      :timer.sleep(40)
-      game
-    end)
-    |> perform_autowin(pid)
+  def perform_automove_to_foundation(%{cols: cols, foundation: foundation} = game, pid) do
+    :timer.sleep(200)
+    GameServer.move_to_foundation(pid, :deck)
+
+    new_game =
+      %{foundation: new_foundation} =
+      cols
+      |> Enum.with_index()
+      |> Enum.reduce(game, fn {_col, index}, _game ->
+        game = GameServer.move_to_foundation(pid, index)
+        broadcast_to_game_topic(pid, game)
+        :timer.sleep(40)
+        game
+      end)
+
+    if new_foundation != foundation do
+      perform_automove_to_foundation(new_game, pid)
+    end
   end
 
   defp broadcast_to_game_topic(pid, game) do

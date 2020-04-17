@@ -59,6 +59,8 @@ defmodule Solitaire.Game.Sever do
   def handle_continue(:give_cards, _state) do
     measure("give_cards", fn ->
       state = Game.load_game()
+
+      perform_automove_to_foundation(state, self())
       {:noreply, state}
     end)
   end
@@ -83,8 +85,6 @@ defmodule Solitaire.Game.Sever do
 
     new_state = update_game_state(state, result)
 
-    check_for_autowin(new_state)
-
     {:reply, new_state, new_state}
   end
 
@@ -92,7 +92,7 @@ defmodule Solitaire.Game.Sever do
     result = Map.put(state, :deck, Game.change(state))
     new_state = state |> update_game_state(result) |> put_deck_length
 
-    check_for_autowin(state)
+    perform_automove_to_foundation(state, self())
     {:reply, new_state, new_state}
   end
 
@@ -105,7 +105,7 @@ defmodule Solitaire.Game.Sever do
 
     new_state = update_game_state(state, result)
 
-    check_for_autowin(new_state)
+    perform_automove_to_foundation(new_state, self())
 
     {:reply, new_state, new_state}
   end
@@ -115,7 +115,7 @@ defmodule Solitaire.Game.Sever do
 
     new_state = update_game_state(state, result)
 
-    check_for_autowin(new_state)
+    perform_automove_to_foundation(new_state, self())
 
     {:reply, new_state, new_state}
   end
@@ -132,19 +132,14 @@ defmodule Solitaire.Game.Sever do
     |> Map.put(:foundation, result.foundation)
   end
 
-  def perform_autowin_maybe(game, pid) do
-    if Game.deck_empty?(game) and Game.cols_empty?(game) do
-      Task.async(fn -> Solitaire.Game.Autoplayer.perform_autowin(game, pid) end)
-    end
+  def perform_automove_to_foundation(game, pid) do
+    Task.async(fn ->
+      Solitaire.Game.Autoplayer.perform_automove_to_foundation(game, pid)
+    end)
   end
 
-  def handle_info(msg, state) do
-    IO.inspect(msg)
+  def handle_info(_msg, state) do
+    # IO.inspect(msg)
     {:noreply, state}
-  end
-
-  @spec check_for_autowin([any] | %{deck: [any] | %{deck: [any] | map}}) :: nil | Task.t()
-  def check_for_autowin(game) do
-    perform_autowin_maybe(game, self())
   end
 end
