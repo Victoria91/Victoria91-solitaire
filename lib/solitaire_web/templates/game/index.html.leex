@@ -69,19 +69,34 @@
     <div id="waste" class="waste pile" phx-click="move_from_deck" data-pile="waste" data-played="1" data-unplayed="0" style="height: 140px;">
       <ul>
         <%= if current(@deck) do %>
-          <li class="card up" data-rank=<%= elem(current(@deck),1) %> data-suit=<%= elem(current(@deck),0) %> data-pile="waste" data-selected=<%= @move_from_deck  %> data-played="true">
-            <div class="king <%= elem(current(@deck),0) %>">
+          <li class="card up" style="left: <%= left_style(@deck |> deck_top |> length) |> List.last() %>em" data-rank=<%= rank(current(@deck)) %> data-suit=<%= suit(current(@deck)) %> data-pile="waste" data-selected=<%= @move_from_deck  %> data-played="true">
+            <div class="king <%= suit(current(@deck)) %>">
               <div class="corner top">
-                <span class="grank"><%= elem(current(@deck),1) %></span>
+                <span class="grank"><%= rank(current(@deck)) %></span>
                 <span class="suit"></span>
               </div>
               <span class="face middle_center"></span>
               <div class="corner bottom">
-                <span class="rank"><%= elem(current(@deck),1) %></span>
+                <span class="rank"><%= rank(current(@deck)) %></span>
                 <span class="suit"></span>
               </div>
             </div>
           </li>
+          <%= Enum.with_index(deck_top(@deck) |> Enum.slice(1  .. -1)) |> Enum.map(fn {card, i} -> %>
+            <li class="card up" style="left: <%= left_style(@deck |> deck_top |> length) |> Enum.at(length(deck_top(@deck)) - 2 - i) %>em">
+              <div class="king <%= suit(card) %>">
+              <div class="corner top">
+                <span class="grank"><%= rank(card) %></span>
+                <span class="suit"></span>
+              </div>
+              <span class="face middle_center"></span>
+              <div class="corner bottom">
+                <span class="rank"><%= rank(card) %></span>
+                <span class="suit"></span>
+              </div>
+              </div>
+            </li>
+          <% end) %>
         <% end %>
       </ul>
     </div>

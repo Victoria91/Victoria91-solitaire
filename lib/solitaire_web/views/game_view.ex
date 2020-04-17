@@ -1,7 +1,10 @@
 defmodule SolitaireWeb.GameView do
+  @card_offsets [0, 4, 8]
   @rank_classes %{"3" => "three", "K" => "king"}
 
   use SolitaireWeb, :view
+
+  defdelegate ranks, to: Solitaire.Game
 
   def rank(card), do: elem(card, 1)
 
@@ -14,7 +17,13 @@ defmodule SolitaireWeb.GameView do
     end
   end
 
+  def left_style(i), do: Enum.take(@card_offsets, i)
+
   def current(deck) do
     deck |> List.first() |> List.first()
+  end
+
+  def deck_top(deck) do
+    List.first(deck)
   end
 end
