@@ -1,17 +1,19 @@
-defmodule Solitaire.GameTest do
-  alias Solitaire.Game
-  alias Solitaire.Game.Sever, as: GameServer
+defmodule Solitaire.Game.KlondikeTest do
+  alias Solitaire.Game.Klondike
+
   use ExUnit.Case
 
-  describe "#change" do
-    setup do
-      {:ok, pid} = GameServer.start_link([])
-      {:ok, %{pid: pid}}
-    end
+  setup do
+    game = Klondike.load_game(3)
+    {:ok, %{game: game}}
+  end
 
-    test "changes - next cards move to top, current cards - to the end of the queue", %{pid: pid} do
-      %{deck: [h | rest] = deck} = game = GameServer.state(pid)
-      rest_deck = res = Game.change(game)
+  describe "#change" do
+    test "changes - next cards move to top, current cards - to the end of the queue", %{
+      game: game
+    } do
+      %{deck: [h | rest] = deck} = game
+      rest_deck = res = Klondike.change(game)
       assert rest ++ [h] == res
       assert length(rest_deck) == length(deck)
     end
@@ -24,21 +26,15 @@ defmodule Solitaire.GameTest do
         [{"heart", "8"}, {"club", "10"}, {"club", "6"}]
       ]
 
-      new_deck = Game.change(%{deck: deck})
+      new_deck = Klondike.change(%{deck: deck})
       deck_chunk_length = Enum.map(new_deck, &length/1)
       assert deck_chunk_length == [3, 3, 2, 0]
     end
   end
 
   describe "#move_from_column/3" do
-    setup do
-      {:ok, pid} = GameServer.start_link([])
-      {:ok, %{pid: pid}}
-      # {:ok, }
-    end
-
-    test "when to column black - only King can be moved", %{pid: pid} do
-      %{cols: cols} = game = GameServer.state(pid)
+    test "when to column black - only King can be moved", %{game: game} do
+      %{cols: cols} = game
 
       new_cols =
         cols
@@ -48,18 +44,15 @@ defmodule Solitaire.GameTest do
         |> List.replace_at(0, %{cards: [], unplayed: 0})
 
       game = %{game | cols: new_cols}
-      Game.move_from_column(game, 3, 0)
+      {:ok, %{cols: cols}} = Klondike.move_from_column(game, {3, 0}, 0)
+      assert List.first(cols) == %{cards: [{"heart", "K"}], unplayed: 0}
+      assert Enum.at(cols, 3) == %{cards: [], unplayed: 0}
     end
   end
 
   describe "#move_from_deck/2" do
-    setup do
-      {:ok, pid} = GameServer.start_link([])
-      {:ok, %{pid: pid}}
-    end
-
-    test "1", %{pid: pid} do
-      %{cols: cols} = game = GameServer.state(pid)
+    test "1", %{game: game} do
+      %{cols: cols} = game
 
       initial_deck = [
         [{"heart", "4"}],
@@ -76,15 +69,14 @@ defmodule Solitaire.GameTest do
         |> Map.put(:deck, initial_deck)
         |> Map.put(:cols, cols)
 
-      %{deck: result_deck, cols: result_cols} = Game.move_from_deck(game, 2)
+      %{deck: result_deck, cols: result_cols} = Klondike.move_from_deck(game, 2)
       assert result_deck == Enum.slice(initial_deck, 1..-1)
       %{cards: result_cards} = Enum.at(result_cols, 2)
       assert result_cards == [{"heart", "4"}, {"spade", "5"}]
     end
 
-    # @tag :skip
-    test "2", %{pid: pid} do
-      %{cols: cols} = game = GameServer.state(pid)
+    test "2", %{game: game} do
+      %{cols: cols} = game
 
       initial_deck = [
         [{"heart", "4"}],
@@ -100,20 +92,20 @@ defmodule Solitaire.GameTest do
         |> Map.put(:deck, initial_deck)
         |> Map.put(:cols, cols)
 
-      %{deck: result_deck, cols: result_cols} = Game.move_from_deck(game, 2)
+      %{deck: result_deck, cols: result_cols} = Klondike.move_from_deck(game, 2)
       assert result_deck == Enum.slice(initial_deck, 1..-1)
       %{cards: result_cards} = Enum.at(result_cols, 2)
       assert result_cards == [{"heart", "4"}, {"spade", "5"}]
     end
 
-    test "3", %{pid: pid} do
+    test "3", %{game: game} do
       deck = [
         [{"diamond", "5"}, {"club", "6"}, {"diamond", "A"}],
         [{"spade", "3"}, {"diamond", "K"}, {"club", "A"}],
         []
       ]
 
-      %{cols: cols} = game = GameServer.state(pid)
+      %{cols: cols} = game
 
       new_cols =
         cols
@@ -124,7 +116,7 @@ defmodule Solitaire.GameTest do
         |> Map.put(:deck, deck)
         |> Map.put(:cols, new_cols)
 
-      %{deck: result_deck} = Game.move_from_deck(game, 3)
+      %{deck: result_deck} = Klondike.move_from_deck(game, 3)
 
       assert result_deck == [
                [{"club", "6"}, {"diamond", "A"}],
@@ -134,57 +126,9 @@ defmodule Solitaire.GameTest do
     end
 
     test "4" do
-      game = %Solitaire.Game{
+      game = %Solitaire.Games{
         cols: [
-          %{cards: [{"club", "D"}, {"diamond", "K"}], unplayed: 0},
-          %{cards: [{"diamond", "6"}], unplayed: 0},
-          %{
-            cards: [
-              {"diamond", "5"},
-              {"club", "6"},
-              {"heart", "7"},
-              {"diamond", "10"}
-            ],
-            unplayed: 1
-          },
-          %{
-            cards: [{"spade", "2"}, {"heart", "10"}, {"club", "10"}, {"club", "J"}],
-            unplayed: 3
-          },
-          %{
-            cards: [
-              {"spade", "A"},
-              {"diamond", "2"},
-              {"club", "3"},
-              {"spade", "8"},
-              {"spade", "10"},
-              {"diamond", "4"},
-              {"spade", "4"}
-            ],
-            unplayed: 4
-          },
-          %{
-            cards: [
-              {"spade", "J"},
-              {"diamond", "D"},
-              {"club", "2"},
-              {"diamond", "A"},
-              {"spade", "5"},
-              {"diamond", "J"}
-            ],
-            unplayed: 5
-          },
-          %{
-            cards: [
-              {"heart", "9"},
-              {"heart", "6"},
-              {"spade", "3"},
-              {"diamond", "7"},
-              {"diamond", "3"},
-              {"spade", "D"}
-            ],
-            unplayed: 5
-          }
+          %{cards: [{"club", "D"}, {"diamond", "K"}], unplayed: 0}
         ],
         deck: [
           [{"heart", "J"}, {"heart", "D"}, {"club", "8"}],
@@ -194,7 +138,18 @@ defmodule Solitaire.GameTest do
         deck_length: 1
       }
 
-      Game.move_from_deck(game, 0)
+      %{cols: cols, deck: deck} = Klondike.move_from_deck(game, 0)
+
+      assert List.first(cols) == %{
+               cards: [{"heart", "J"}, {"club", "D"}, {"diamond", "K"}],
+               unplayed: 0
+             }
+
+      assert deck == [
+               [{"heart", "D"}, {"club", "8"}],
+               [{"club", "9"}, {"diamond", "9"}, {"club", "5"}],
+               []
+             ]
     end
   end
 
@@ -202,17 +157,17 @@ defmodule Solitaire.GameTest do
     test "when foundation is nil - A is available for move" do
       game = %{deck: [[{"spade", "A"}], []], foundation: %{"spade" => nil}}
 
-      Game.move_to_foundation(game, :deck)
+      Klondike.move_to_foundation(game, :deck)
 
       assert %{deck: [[]], foundation: %{"spade" => "A"}} ==
-               Game.move_to_foundation(game, :deck)
+               Klondike.move_to_foundation(game, :deck)
     end
 
     test "with non-empty foundation - next rank is available" do
       game = %{deck: [[{"spade", "2"}], []], foundation: %{"spade" => "A"}}
 
       assert %{deck: [[]], foundation: %{"spade" => "2"}} ==
-               Game.move_to_foundation(game, :deck)
+               Klondike.move_to_foundation(game, :deck)
     end
   end
 
@@ -220,17 +175,17 @@ defmodule Solitaire.GameTest do
     test "when foundation is nil - A is available for move" do
       game = %{cols: [%{cards: [{"spade", "A"}], unplayed: 0}], foundation: %{"spade" => nil}}
 
-      Game.move_to_foundation(game, 0)
+      Klondike.move_to_foundation(game, 0)
 
       assert %{cols: [%{cards: [], unplayed: 0}], foundation: %{"spade" => "A"}} ==
-               Game.move_to_foundation(game, 0)
+               Klondike.move_to_foundation(game, 0)
     end
 
     test "with non-empty foundation - next rank is available" do
       game = %{cols: [%{cards: [{"spade", "2"}], unplayed: 0}], foundation: %{"spade" => "A"}}
 
       assert %{cols: [%{cards: [], unplayed: 0}], foundation: %{"spade" => "2"}} ==
-               Game.move_to_foundation(game, 0)
+               Klondike.move_to_foundation(game, 0)
     end
 
     test "unplayed handling" do
@@ -243,7 +198,7 @@ defmodule Solitaire.GameTest do
                cols: [%{cards: [{"heart", "3"}, {"king", "4"}], unplayed: 1}],
                foundation: %{"spade" => "2"}
              } ==
-               Game.move_to_foundation(game, 0)
+               Klondike.move_to_foundation(game, 0)
     end
   end
 end

@@ -1,0 +1,15 @@
+<div id="stock" phx-click="change" class="stock pile" data-pile="stock" data-played="6" data-unplayed="17" style="height: 140px;">
+    <i class="reload-icon" data-action="reload">
+    <span></span>
+    </i>
+    <ul>
+        <%= if Enum.at(@deck, 1) != [] && @deck != [[]] do %>
+          <li class="card" data-pile="stock" data-selected="false">
+          </li>
+          <%=  Enum.map(1 .. @deck_length, fn  _ -> %>
+            <li class="card" data-pile="stock" data-selected="false">
+            </li> %>
+          <% end) %>
+        <% end %>
+    </ul>
+</div>

@@ -75,5 +75,5 @@ config :phoenix, :stacktrace_depth, 20
 # Initialize plugs at runtime for faster development compilation
 config :phoenix, :plug_init_mode, :runtime
 
-config :statsd_logger, port: 8126, enable: false
+config :statsd_logger, port: 8126, enable: true
 config :statix, Solitaire.Statix, port: 8126

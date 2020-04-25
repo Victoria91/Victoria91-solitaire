@@ -1,0 +1,31 @@
+<%= if @type == :klondike do %>
+    <%= Enum.map(~w(spade club diamond heart), fn suit -> %>
+        <li id=<%= suit<>"s" %> class="<%= "#{suit}<>s" %> pile" data-pile=<%= "#{suit}<>s" %> data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;" phx-click="put" phx-value-suit=<%= suit %> >
+            <ul>
+            <%= render("fnd.html", foundation: @foundation[suit], suit: suit, pop: @pop) %>
+            </ul>
+        </li>
+    <% end) %>
+<% else %>
+    <%= Map.keys(@foundation) |> Enum.map(fn suit -> %>
+        <%= if @foundation[suit] do %>
+            <%= Enum.map(1 .. @foundation[suit] |> IO.inspect(label: "range"), fn _ -> %>
+                <li id=<%= suit<>"s" %> class="<%= "#{suit}<>s" %> pile <%= @type %>" data-pile=<%= "#{suit}<>s" %> data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;" phx-click="put" phx-value-suit=<%= suit %> >
+                    <ul>
+                    <%= render("spider_fnd.html", foundation: @foundation[suit], suit: suit, pop: @pop) %>
+                    </ul>
+                </li>
+            <% end) %>
+        <% end %>
+
+    <% end) %>
+
+    <%= if @unplayed_fnd_cols_count > 0 do %>
+        <%= Enum.map(1.. @unplayed_fnd_cols_count, fn _ -> %>
+            <li class="pile <%= @type %>" data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;" phx-click="put"  >
+                <ul>
+                </ul>
+            </li>
+        <% end) %>
+    <% end %>
+<% end %>

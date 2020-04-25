@@ -1,0 +1,10 @@
+<div id="stock" phx-click="move_from_deck" class="stock pile spider" data-pile="stock" data-played="6" data-unplayed="17" style="height: 140px;">
+    <ul>
+        <%= if @deck != [[]] do %>
+            <%=  Enum.map(1 .. length(@deck) - 1, fn  i -> %>
+                <li class="card" data-pile="stock" style="left: <%= 15 - 3 * i %>em" data-selected="false">
+                </li>
+            <% end) %>
+        <% end %>
+    </ul>
+</div>

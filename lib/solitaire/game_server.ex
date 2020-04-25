@@ -1,7 +1,7 @@
 defmodule Solitaire.Game.Sever do
   use GenServer
 
-  alias Solitaire.{Game, Statix}
+  alias Solitaire.Statix
 
   @spec start_link(any) :: :ignore | {:error, any} | {:ok, pid}
   def start_link(_) do
@@ -17,7 +17,7 @@ defmodule Solitaire.Game.Sever do
 
   @spec init(any) :: {:ok, Game.t(), {:continue, :give_cards}}
   def init(_) do
-    {:ok, %{}, {:continue, :give_cards}}
+    {:ok, %{type: Application.get_env(:solitaire, :game)[:type]}, {:continue, :give_cards}}
   end
 
   def move_to_foundation(pid, attr) do
@@ -35,7 +35,7 @@ defmodule Solitaire.Game.Sever do
   end
 
   def change(pid) do
-    measure("chanfe", fn ->
+    measure("change", fn ->
       GenServer.call(pid, :change)
     end)
   end
@@ -56,12 +56,14 @@ defmodule Solitaire.Game.Sever do
     end)
   end
 
-  def handle_continue(:give_cards, _state) do
+  def handle_continue(:give_cards, state) do
     measure("give_cards", fn ->
-      state = Game.load_game()
+      new_state =
+        update_game_state(state, module(state).load_game(suit_count()))
+        |> put_deck_length()
 
-      perform_automove_to_foundation(state, self())
-      {:noreply, state}
+      perform_automove_to_foundation(new_state, self())
+      {:noreply, new_state}
     end)
   end
 
@@ -70,7 +72,7 @@ defmodule Solitaire.Game.Sever do
   end
 
   def handle_call({:move_from_foundation, suit, column}, _from, state) do
-    result = Game.move_from_foundation(state, suit, column)
+    result = module(state).move_from_foundation(state, suit, column)
 
     new_state =
       state
@@ -81,7 +83,7 @@ defmodule Solitaire.Game.Sever do
   end
 
   def handle_call({:move_to_foundation, attr}, _from, state) do
-    result = Game.move_to_foundation(state, attr)
+    result = module(state).move_to_foundation(state, attr)
 
     new_state = update_game_state(state, result)
 
@@ -89,7 +91,7 @@ defmodule Solitaire.Game.Sever do
   end
 
   def handle_call(:change, _from, state) do
-    result = Map.put(state, :deck, Game.change(state))
+    result = Map.put(state, :deck, module(state).change(state))
     new_state = state |> update_game_state(result) |> put_deck_length
 
     perform_automove_to_foundation(state, self())
@@ -101,7 +103,7 @@ defmodule Solitaire.Game.Sever do
         _from,
         state
       ) do
-    result = Game.move_from_deck(state, column)
+    result = module(state).move_from_deck(state, column)
 
     new_state = update_game_state(state, result)
 
@@ -111,7 +113,7 @@ defmodule Solitaire.Game.Sever do
   end
 
   def handle_call({:move_from_column, from, to}, _from, state) do
-    {_, result} = Game.move_from_column(state, from, to)
+    {_, result} = module(state).move_from_column(state, from, to)
 
     new_state = update_game_state(state, result)
 
@@ -129,17 +131,25 @@ defmodule Solitaire.Game.Sever do
     state
     |> Map.put(:cols, result.cols)
     |> Map.put(:deck, result.deck)
+    |> Map.put(:deck_length, result.deck_length)
     |> Map.put(:foundation, result.foundation)
   end
 
-  def perform_automove_to_foundation(game, pid) do
+  def perform_automove_to_foundation(%{type: :klondike} = game, pid) do
     Task.async(fn ->
       Solitaire.Game.Autoplayer.perform_automove_to_foundation(game, pid)
     end)
   end
 
+  def perform_automove_to_foundation(_, _), do: false
+
   def handle_info(_msg, state) do
     # IO.inspect(msg)
     {:noreply, state}
   end
+
+  defp suit_count(), do: Application.get_env(:solitaire, :game)[:suit_count]
+
+  defp module(%{type: :klondike}), do: Solitaire.Game.Klondike
+  defp module(_), do: Solitaire.Game.Spider
 end

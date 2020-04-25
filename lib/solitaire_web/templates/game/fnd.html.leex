@@ -12,8 +12,8 @@
         </div>
         </div>
     </li>
-    <%= if @foundation != List.first(ranks) do %>
-        <%= Enum.map(1 .. Enum.find_index(ranks, & &1 == @foundation), fn _ -> %>
+    <%= if @foundation != List.first(ranks()) do %>
+        <%= Enum.map(1 .. Enum.find_index(ranks(), & &1 == @foundation), fn _ -> %>
             <li class="card"></li>
         <% end) %>
     <% end %>

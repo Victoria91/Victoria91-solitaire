@@ -1,7 +1,7 @@
-defmodule Solitaire.Game.Foundation do
-  alias Solitaire.Game
+defmodule Solitaire.Game.Klondike.Foundation do
+  alias Solitaire.Games
 
-  @ranks Game.ranks()
+  @ranks Games.ranks()
 
   @spec push(map, binary) :: map
   def push(foundation, suit) do

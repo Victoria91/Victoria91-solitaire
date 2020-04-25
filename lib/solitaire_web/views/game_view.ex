@@ -4,7 +4,7 @@ defmodule SolitaireWeb.GameView do
 
   use SolitaireWeb, :view
 
-  defdelegate ranks, to: Solitaire.Game
+  defdelegate ranks, to: Solitaire.Games
 
   def rank(card), do: elem(card, 1)
 

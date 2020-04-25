@@ -1,5 +1,5 @@
-<li class="card <%= if @played?, do: "up" %>" data-rank="<%= if @played?, do: rank(@card) %>" data-suit="<%= if @played?, do: suit(@card) %>" data-pile="tab" data-selected=<%= @move_from_column == @col_index && @played? %>
-data-played="false">
+<li class="card <%= if @played?, do: "up" %>" data-rank="<%= if @played?, do: rank(@card) %>" data-suit="<%= if @played?, do: suit(@card) %>" data-pile="tab" data-selected=<%= @move_from_column == @col_index && @played? && @index == @move_from_index %>
+data-played="false" <%= "phx-click=move phx-value-index=#{@index} phx-value-column=#{@col_index}" %>>
     <%= if @played? do %>
         <div class="<%= "#{card_rank_class(@card)} #{suit(@card)}" %>">
             <div class="corner top">
