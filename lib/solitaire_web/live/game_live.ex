@@ -7,22 +7,41 @@ defmodule SolitaireWeb.GameLive do
     Phoenix.View.render(SolitaireWeb.GameView, "index.html", assigns)
   end
 
-  def mount(_params, _session, socket) do
-    {:ok, pid} = GameServer.start_link([])
+  def mount(_params, %{"_csrf_token" => token}, socket) do
+    token |> IO.inspect(label: "token")
 
-    Phoenix.PubSub.subscribe(Solitaire.PubSub, "game:#{inspect(pid)}")
+    start_unless_started(token)
 
-    pid |> IO.inspect(label: "PID")
-    state = GameServer.state(pid)
+    Phoenix.PubSub.subscribe(Solitaire.PubSub, "game:#{token}")
+
+    # pid |> IO.inspect(label: "PID")
+    state = GameServer.state(token)
 
     socket =
-      assign_game_state(socket, state, pid)
+      assign_game_state(socket, state, token)
       |> assign(:move_from_deck, false)
       |> assign(:pop, false)
       |> assign(:move_from_column, false)
       |> assign(:move_from_index, false)
 
     {:ok, socket}
+  end
+
+  defp start_unless_started(token) do
+    case GameServer.start_link(token) |> IO.inspect(label: "START LINK RES") do
+      {:error, _} -> :error
+      result -> result
+    end
+  end
+
+  def handle_event("new_game", _, socket) do
+    pid = socket.assigns[:pid]
+
+    GameServer.restart(pid)
+    state = GameServer.state(pid)
+    new_socket = assign_game_state(socket, GameServer.state(pid), pid)
+    broadcast_game_state(pid, state)
+    {:noreply, new_socket}
   end
 
   def handle_event("move_from_deck", _val, socket) do
@@ -33,6 +52,7 @@ defmodule SolitaireWeb.GameLive do
         pid = socket.assigns[:pid]
 
         state = GameServer.move_from_deck(pid, [])
+        broadcast_game_state(pid, state)
         assign_game_state(socket, state, pid)
       end
 
@@ -48,12 +68,15 @@ defmodule SolitaireWeb.GameLive do
       socket.assigns[:move_from_deck] ->
         game = GameServer.move_to_foundation(pid, :deck)
         new_socket = assign_game_state(socket, game, pid)
+        broadcast_game_state(pid, game)
+
         {:noreply, new_socket}
 
       from_column = socket.assigns[:move_from_column] ->
         pid = socket.assigns.pid |> IO.inspect()
         state = GameServer.move_to_foundation(pid, from_column)
         new_socket = assign_game_state(socket, state, pid) |> assign(:move_from_column, false)
+        broadcast_game_state(pid, state)
 
         {:noreply, new_socket}
 
@@ -72,6 +95,7 @@ defmodule SolitaireWeb.GameLive do
         pid = socket.assigns.pid
         state = GameServer.move_from_foundation(pid, suit, column)
         new_socket = assign_game_state(socket, state, pid) |> assign(:pop, false)
+        broadcast_game_state(pid, state)
 
         {:noreply, new_socket}
 
@@ -79,6 +103,7 @@ defmodule SolitaireWeb.GameLive do
         pid = socket.assigns.pid
         state = GameServer.move_from_deck(pid, column)
         new_socket = assign_game_state(socket, state, pid) |> assign(:move_from_deck, false)
+        broadcast_game_state(pid, state)
 
         {:noreply, new_socket}
 
@@ -96,6 +121,8 @@ defmodule SolitaireWeb.GameLive do
           assign_game_state(socket, state, pid)
           |> assign(:move_from_column, false)
           |> assign(:move_from_index, false)
+
+        broadcast_game_state(pid, state)
 
         {:noreply, new_socket}
 
@@ -115,11 +142,17 @@ defmodule SolitaireWeb.GameLive do
 
     state = GameServer.change(pid)
 
+    broadcast_game_state(pid, state)
+
     new_socket =
       assign_game_state(socket, state, pid)
       |> assign(:move_from_deck, false)
 
     {:noreply, new_socket}
+  end
+
+  defp broadcast_game_state(token, state) do
+    Phoenix.PubSub.broadcast_from!(Solitaire.PubSub, self(), "game:#{token}", {:tick, state})
   end
 
   defp parse_integer!(value) do

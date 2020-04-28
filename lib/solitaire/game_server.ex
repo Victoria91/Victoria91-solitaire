@@ -4,30 +4,37 @@ defmodule Solitaire.Game.Sever do
   alias Solitaire.Statix
 
   @spec start_link(any) :: :ignore | {:error, any} | {:ok, pid}
-  def start_link(_) do
-    GenServer.start_link(__MODULE__, [], spawn_opt: [fullsweep_after: 20])
+  def start_link(token) do
+    GenServer.start_link(__MODULE__, %{token: token},
+      spawn_opt: [fullsweep_after: 20],
+      name: name(token)
+    )
   end
 
-  def restart(pid) do
-    GenServer.stop(pid)
-    start_link(pid)
+  def restart(token) do
+    GenServer.stop(name(token))
+    start_link(token)
   end
 
-  @spec state(atom | pid | {atom, any} | {:via, atom, any}) :: any
-  def state(pid) do
+  defp name(token) do
+    {:global, token}
+  end
+
+  def state(token) do
     measure("get_state", fn ->
-      GenServer.call(pid, :state)
+      GenServer.call(name(token), :state)
     end)
   end
 
   @spec init(any) :: {:ok, Game.t(), {:continue, :give_cards}}
-  def init(_) do
-    {:ok, %{type: Application.get_env(:solitaire, :game)[:type]}, {:continue, :give_cards}}
+  def init(state) do
+    {:ok, Map.merge(state, %{type: Application.get_env(:solitaire, :game)[:type]}),
+     {:continue, :give_cards}}
   end
 
-  def move_to_foundation(pid, attr) do
+  def move_to_foundation(token, attr) do
     measure("move_to_foundation", fn ->
-      GenServer.call(pid, {:move_to_foundation, attr})
+      GenServer.call(name(token), {:move_to_foundation, attr})
     end)
   end
 
@@ -39,25 +46,25 @@ defmodule Solitaire.Game.Sever do
     end
   end
 
-  def change(pid) do
+  def change(token) do
     measure("change", fn ->
-      GenServer.call(pid, :change)
+      GenServer.call(name(token), :change)
     end)
   end
 
-  def move_from_deck(pid, column) do
+  def move_from_deck(token, column) do
     measure("move_from_deck", fn ->
-      GenServer.call(pid, {:move_from_deck, column})
+      GenServer.call(name(token), {:move_from_deck, column})
     end)
   end
 
-  def move_from_column(pid, from, to) do
-    GenServer.call(pid, {:move_from_column, from, to})
+  def move_from_column(token, from, to) do
+    GenServer.call(name(token), {:move_from_column, from, to})
   end
 
-  def move_from_foundation(pid, suit, column) do
+  def move_from_foundation(token, suit, column) do
     measure("move_from_foundation", fn ->
-      GenServer.call(pid, {:move_from_foundation, suit, column})
+      GenServer.call(name(token), {:move_from_foundation, suit, column})
     end)
   end
 
@@ -67,7 +74,7 @@ defmodule Solitaire.Game.Sever do
         update_game_state(state, module(state).load_game(suit_count()))
         |> put_deck_length()
 
-      perform_automove_to_foundation(new_state, self())
+      perform_automove_to_foundation(new_state)
       {:noreply, new_state}
     end)
   end
@@ -99,7 +106,7 @@ defmodule Solitaire.Game.Sever do
     result = Map.put(state, :deck, module(state).change(state))
     new_state = state |> update_game_state(result) |> put_deck_length
 
-    perform_automove_to_foundation(state, self())
+    perform_automove_to_foundation(state)
     {:reply, new_state, new_state}
   end
 
@@ -112,7 +119,7 @@ defmodule Solitaire.Game.Sever do
 
     new_state = update_game_state(state, result)
 
-    perform_automove_to_foundation(new_state, self())
+    perform_automove_to_foundation(new_state)
 
     {:reply, new_state, new_state}
   end
@@ -122,7 +129,7 @@ defmodule Solitaire.Game.Sever do
 
     new_state = update_game_state(state, result)
 
-    perform_automove_to_foundation(new_state, self())
+    perform_automove_to_foundation(new_state)
 
     {:reply, new_state, new_state}
   end
@@ -140,13 +147,13 @@ defmodule Solitaire.Game.Sever do
     |> Map.put(:foundation, result.foundation)
   end
 
-  def perform_automove_to_foundation(%{type: :klondike} = game, pid) do
+  def perform_automove_to_foundation(%{type: :klondike, token: token} = game) do
     Task.async(fn ->
-      Solitaire.Game.Autoplayer.perform_automove_to_foundation(game, pid)
+      Solitaire.Game.Autoplayer.perform_automove_to_foundation(game, token)
     end)
   end
 
-  def perform_automove_to_foundation(_, _), do: false
+  def perform_automove_to_foundation(_), do: false
 
   def handle_info(_msg, state) do
     # IO.inspect(msg)

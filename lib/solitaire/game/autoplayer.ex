@@ -80,6 +80,6 @@ defmodule Solitaire.Game.Autoplayer do
   end
 
   defp broadcast_to_game_topic(pid, game) do
-    Phoenix.PubSub.broadcast(Solitaire.PubSub, "game:#{inspect(pid)}", {:tick, game})
+    Phoenix.PubSub.broadcast(Solitaire.PubSub, "game:#{pid}", {:tick, game})
   end
 end
