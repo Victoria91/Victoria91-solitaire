@@ -8,6 +8,11 @@ defmodule Solitaire.Game.Sever do
     GenServer.start_link(__MODULE__, [], spawn_opt: [fullsweep_after: 20])
   end
 
+  def restart(pid) do
+    GenServer.stop(pid)
+    start_link(pid)
+  end
+
   @spec state(atom | pid | {atom, any} | {:via, atom, any}) :: any
   def state(pid) do
     measure("get_state", fn ->
