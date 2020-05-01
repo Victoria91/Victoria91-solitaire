@@ -2,10 +2,10 @@ defmodule Solitaire.Games do
   defstruct cols: [],
             deck: [],
             deck_length: 8,
-            foundation: %{"spade" => nil, "diamond" => nil, "heart" => nil, "club" => nil}
+            foundation: %{spade: nil, diamond: nil, heart: nil, club: nil}
 
-  @ranks ~w(A 2 3 4 5 6 7 8 9 10 J D K)
-  @suits ~w(spade heart diamond club)
+  @ranks [:A, 2, 3, 4, 5, 6, 7, 8, 9, 10, :J, :D, :K]
+  @suits ~w(spade heart diamond club)a
 
   @callback load_game(keyword) :: Games.t()
   @callback can_move?(tuple, list(tuple)) :: boolean

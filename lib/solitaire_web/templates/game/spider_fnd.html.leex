@@ -1,4 +1,4 @@
-<li class="card up" data-rank=<%= "A" %> data-suit=<%= @suit %>  data-pile=<%= @suit<>"s" %> data-selected=<%= @pop == @suit %> data-played="true">
+<li class="card up" data-rank=<%= "A" %> data-suit=<%= @suit %>  data-pile=<%= to_string(@suit)<>"s" %> data-selected=<%= @pop == @suit %> data-played="true">
     <div class="ace <%= @suit %>">
     <div class="corner top">
     <span class="rank"><%= "A" %></span>

@@ -27,16 +27,20 @@ defmodule Solitaire.Game.Spider do
     Enum.flat_map(Games.ranks(), fn r ->
       Enum.map(Enum.take(Games.suits(), suit_count), fn s -> {s, r} end)
     end)
-    |> List.duplicate(floor(104 / (13 * suit_count)))
+    |> List.duplicate(
+      floor(ranks_length() * length(Games.suits()) * 2 / (ranks_length() * suit_count))
+    )
     |> List.flatten()
   end
 
+  defp ranks_length, do: length(Games.ranks())
+
   @impl Games
-  @spec move_to_foundation(%{cols: any, deck: any, foundation: any}, integer) :: %{cols: any}
+  def move_to_foundation(game, :deck), do: game
+
   def move_to_foundation(%{cols: cols} = game, col_num) do
     %{cards: [from | _] = cards} = Enum.at(cols, col_num)
-    cards_to_move_count = length(Games.ranks())
-    cards_to_move = Enum.take(cards, cards_to_move_count)
+    cards_to_move = Enum.take(cards, ranks_length())
 
     with true <- cards_in_one_suit?(cards_to_move),
          true <- cards_in_sequence?(cards_to_move) do
@@ -44,7 +48,7 @@ defmodule Solitaire.Game.Spider do
         game,
         Games.suit(from),
         col_num,
-        cards_to_move_count,
+        ranks_length(),
         Solitaire.Game.Spider.Foundation
       )
     else
@@ -54,6 +58,7 @@ defmodule Solitaire.Game.Spider do
   end
 
   @impl Games
+
   def move_from_deck(%{deck: [next | rest], cols: cols} = game, __) do
     if all_cols_are_non_empty?(cols) do
       next
@@ -70,6 +75,10 @@ defmodule Solitaire.Game.Spider do
       game
     end
   end
+
+  def move_from_deck(game, _), do: game
+
+  def change(game), do: game
 
   defp all_cols_are_non_empty?(cols) do
     cols

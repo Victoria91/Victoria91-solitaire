@@ -1,6 +1,6 @@
 defmodule SolitaireWeb.GameView do
   @card_offsets [0, 4, 8]
-  @rank_classes %{"3" => "three", "K" => "king"}
+  @rank_classes %{3 => "three", :K => "king"}
 
   use SolitaireWeb, :view
 

@@ -83,7 +83,7 @@ defmodule Solitaire.Game.Sever do
     {:reply, state, state}
   end
 
-  def handle_call({:move_from_foundation, suit, column}, _from, state) do
+  def handle_call({:move_from_foundation, suit, column}, _from, %{type: :klondike} = state) do
     result = module(state).move_from_foundation(state, suit, column)
 
     new_state =
@@ -92,6 +92,10 @@ defmodule Solitaire.Game.Sever do
       |> put_deck_length
 
     {:reply, new_state, new_state}
+  end
+
+  def handle_call({:move_from_foundation, _suit, _column}, _from, state) do
+    {:reply, state, state}
   end
 
   def handle_call({:move_to_foundation, attr}, _from, state) do

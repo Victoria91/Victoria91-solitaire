@@ -1,15 +1,21 @@
 defmodule Solitaire.Game.Autoplayer do
   alias Solitaire.Game.Sever, as: GameServer
 
-  def start do
-    # Task.async(fn ->
-    {:ok, pid} = GameServer.start_link([])
-    # :timer.sleep(:rand.uniform(1_000_000))
-    state = GameServer.state(pid)
-    play(state, pid)
-    # end)
+  def start(token, opts \\ []) do
+    async = Keyword.get(opts, :async, false)
+    wait = Keyword.get(opts, :async, false)
+
+    fun = fn ->
+      GameServer.start_link(token)
+      if wait, do: :timer.sleep(:rand.uniform(1_000_000))
+      state = GameServer.state(token)
+      play(state, token)
+    end
+
+    if async, do: Task.async(fun), else: fun.()
   end
 
+  @spec play(Solitaire.Games.t(), any, non_neg_integer()) :: Solitaire.Games.t()
   @doc "Автобой"
   def play(
         %{

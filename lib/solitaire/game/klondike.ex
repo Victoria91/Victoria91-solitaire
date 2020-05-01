@@ -4,8 +4,8 @@ defmodule Solitaire.Game.Klondike do
 
   @behaviour Solitaire.Games
 
-  @black_suits ~w(spade club)
-  @red_suits ~w(diamond heart)
+  @black_suits ~w(spade club)a
+  @red_suits ~w(diamond heart)a
 
   @deck Enum.flat_map(Games.ranks(), fn r -> Enum.map(Games.suits(), fn s -> {s, r} end) end)
 
@@ -25,7 +25,7 @@ defmodule Solitaire.Game.Klondike do
       foundation_card = Map.fetch!(foundation, from_suit)
 
       cond do
-        foundation_card == nil && from_rank == "A" ->
+        foundation_card == nil && from_rank == List.first(Games.ranks()) ->
           move_from_deck_to_foundation(game, from_suit)
 
         Games.rank_index(from_rank) - 1 ==
@@ -51,7 +51,7 @@ defmodule Solitaire.Game.Klondike do
       foundation_card = Map.fetch!(foundation, from_suit)
 
       cond do
-        foundation_card == nil && from_rank == "A" ->
+        foundation_card == nil && from_rank == List.first(Games.ranks()) ->
           Games.move_from_column_to_foundation(
             game,
             from_suit,
@@ -102,6 +102,9 @@ defmodule Solitaire.Game.Klondike do
   def change(%{deck: [h | rest]}) do
     rest ++ [h]
   end
+
+  def move_from_foundation(game, suit, to_col_num) when is_binary(suit),
+    do: move_from_foundation(game, String.to_atom(suit), to_col_num)
 
   def move_from_foundation(%{cols: cols, foundation: foundation} = game, suit, to_col_num) do
     from_rank = Map.fetch!(foundation, suit)
@@ -180,7 +183,9 @@ defmodule Solitaire.Game.Klondike do
     can_move?(to, List.last(from))
   end
 
-  def can_move?(nil, {_, "K"}), do: true
+  def can_move?(nil, {_, rank}) do
+    rank == List.last(Games.ranks())
+  end
 
   def can_move?(nil, _), do: false
 
@@ -191,9 +196,10 @@ defmodule Solitaire.Game.Klondike do
   def can_move?({_, rank}, {_, rank}), do: false
 
   # to, from
-  def can_move?({col_suit, col_rank}, {deck_suit, dec_rank}) do
-    with 1 <- Games.rank_index(col_rank) - Games.rank_index(dec_rank),
-         true <- suits_of_different_color?(deck_suit, col_suit) do
+  def can_move?({to_col_suit, to_col_rank}, {from_suit, from_rank}) do
+    with false <- from_rank == List.first(Games.ranks()),
+         1 <- Games.rank_index(to_col_rank) - Games.rank_index(from_rank),
+         true <- suits_of_different_color?(from_suit, to_col_suit) do
       true
     else
       _ -> false

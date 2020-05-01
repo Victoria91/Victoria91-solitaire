@@ -1,8 +1,8 @@
 <%= if @type == :klondike do %>
-    <%= Enum.map(~w(spade club diamond heart), fn suit -> %>
-        <li id=<%= suit<>"s" %> class="<%= "#{suit}<>s" %> pile" data-pile=<%= "#{suit}<>s" %> data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;" phx-click="put" phx-value-suit=<%= suit %> >
+    <%= Enum.map(Map.keys(@foundation), fn suit -> %>
+        <li id=<%= to_string(suit)<>"s" %> class="<%= "#{suit}<>s" %> pile" data-pile=<%= "#{suit}<>s" %> data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;" phx-click="put" phx-value-suit=<%= suit %> >
             <ul>
-            <%= render("fnd.html", foundation: @foundation[suit], suit: suit, pop: @pop) %>
+            <%= render("klondike_fnd.html", foundation: @foundation[suit], suit: suit, pop: @pop) %>
             </ul>
         </li>
     <% end) %>
@@ -10,7 +10,7 @@
     <%= Map.keys(@foundation) |> Enum.map(fn suit -> %>
         <%= if @foundation[suit] do %>
             <%= Enum.map(1 .. @foundation[suit] |> IO.inspect(label: "range"), fn _ -> %>
-                <li id=<%= suit<>"s" %> class="<%= "#{suit}<>s" %> pile <%= @type %>" data-pile=<%= "#{suit}<>s" %> data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;" phx-click="put" phx-value-suit=<%= suit %> >
+                <li class="<%= "#{to_string(suit)}<>s" %> pile <%= @type %>" data-pile=<%= "#{to_string(suit)}<>s" %> data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;" phx-click="put" phx-value-suit=<%= suit %> >
                     <ul>
                     <%= render("spider_fnd.html", foundation: @foundation[suit], suit: suit, pop: @pop) %>
                     </ul>

@@ -14,19 +14,19 @@ defmodule Solitaire.Game.SpiderTest do
         cols
         |> List.replace_at(0, %{
           cards: [
-            {"spade", "A"},
-            {"spade", "2"},
-            {"spade", "3"},
-            {"spade", "4"},
-            {"spade", "5"},
-            {"spade", "6"},
-            {"spade", "7"},
-            {"spade", "8"},
-            {"spade", "9"},
-            {"spade", "10"},
-            {"spade", "J"},
-            {"spade", "D"},
-            {"spade", "K"}
+            {:spade, :A},
+            {:spade, 2},
+            {:spade, 3},
+            {:spade, 4},
+            {:spade, 5},
+            {:spade, 6},
+            {:spade, 7},
+            {:spade, 8},
+            {:spade, 9},
+            {:spade, 10},
+            {:spade, :J},
+            {:spade, :D},
+            {:spade, :K}
           ],
           unplayed: 0
         })
@@ -34,7 +34,7 @@ defmodule Solitaire.Game.SpiderTest do
       game = %{game | cols: new_cols}
 
       %{foundation: foundation, cols: cols} = Spider.move_to_foundation(game, 0)
-      assert %{"spade" => 1} = foundation
+      assert %{:spade => 1} = foundation
       assert Enum.at(cols, 0) == %{cards: [], unplayed: 0}
     end
 
@@ -43,19 +43,19 @@ defmodule Solitaire.Game.SpiderTest do
         cols
         |> List.replace_at(0, %{
           cards: [
-            {"spade", "A"},
-            {"spade", "2"},
-            {"spade", "3"},
-            {"spade", "5"},
-            {"spade", "4"},
-            {"spade", "6"},
-            {"spade", "7"},
-            {"spade", "8"},
-            {"spade", "9"},
-            {"spade", "10"},
-            {"spade", "J"},
-            {"spade", "D"},
-            {"spade", "K"}
+            {:spade, :A},
+            {:spade, 2},
+            {:spade, 3},
+            {:spade, 5},
+            {:spade, 4},
+            {:spade, 6},
+            {:spade, 7},
+            {:spade, 8},
+            {:spade, 9},
+            {:spade, 10},
+            {:spade, :J},
+            {:spade, :D},
+            {:spade, :K}
           ],
           unplayed: 0
         })
@@ -63,7 +63,7 @@ defmodule Solitaire.Game.SpiderTest do
       game = %{game | cols: new_cols}
 
       %{foundation: foundation, cols: cols} = Spider.move_to_foundation(game, 0)
-      assert %{"spade" => nil} = foundation
+      assert %{:spade => nil} = foundation
       assert cols == new_cols
     end
   end
