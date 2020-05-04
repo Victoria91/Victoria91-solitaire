@@ -34,18 +34,18 @@ defmodule Solitaire.MixProject do
   defp deps do
     [
       {:phoenix, ">= 1.4.12"},
-      {:phoenix_pubsub, "~> 1.1"},
-      {:phoenix_html, "~> 2.11"},
-      {:phoenix_live_reload, "~> 1.2", only: :dev},
-      {:gettext, "~> 0.11"},
-      {:jason, "~> 1.0"},
-      {:plug_cowboy, "~> 2.0"},
+      {:phoenix_pubsub, ">= 1.1.0"},
+      {:phoenix_html, ">= 2.11.0"},
+      {:phoenix_live_reload, ">= 1.2", only: :dev},
+      {:gettext, ">= 0.11.0"},
+      {:jason, ">= 1.0.0"},
+      {:plug_cowboy, ">= 2.0.0"},
       {:phoenix_live_view,
        github: "phoenixframework/phoenix_live_view",
        ref: "e3dc2bd5eb177dd0002c96a4e58fe596c1a8ebf2"},
-      {:observer_cli, "~> 1.5"},
-      {:statix, "~> 1.2"},
-      {:statsd_logger, "~> 1.1", only: [:dev, :test]}
+      {:observer_cli, ">= 1.5.0"},
+      {:statix, ">= 1.2.0"},
+      {:statsd_logger, ">= 1.1.0", only: [:dev, :test]}
     ]
   end
 
