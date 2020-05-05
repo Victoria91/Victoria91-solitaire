@@ -40,9 +40,7 @@ defmodule Solitaire.MixProject do
       {:gettext, ">= 0.11.0"},
       {:jason, ">= 1.0.0"},
       {:plug_cowboy, ">= 2.0.0"},
-      {:phoenix_live_view,
-       github: "phoenixframework/phoenix_live_view",
-       ref: "e3dc2bd5eb177dd0002c96a4e58fe596c1a8ebf2"},
+       {:phoenix_live_view, ">= 0.0.0"},
       {:observer_cli, ">= 1.5.0"},
       {:statix, ">= 1.2.0"},
       {:statsd_logger, ">= 1.1.0", only: [:dev, :test]}

@@ -25,7 +25,6 @@ defmodule SolitaireWeb.GameLive do
       |> assign(:move_from_column, false)
       |> assign(:move_from_index, false)
 
-    socket.assigns |> IO.inspect()
 
     {:ok, socket}
   end
