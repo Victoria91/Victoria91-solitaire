@@ -10,7 +10,7 @@ defmodule Solitaire.Application do
     # List all child processes to be supervised
     children = [
       # Start the Ecto repository
-      # Solitaire.Repo,
+      {Phoenix.PubSub, [name: Solitaire.PubSub, adapter: Phoenix.PubSub.PG2]},
       # Start the endpoint when the application starts
       SolitaireWeb.Endpoint
       # Starts a worker by calling: Solitaire.Worker.start_link(arg)
