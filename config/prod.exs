@@ -17,7 +17,7 @@ config :solitaire, SolitaireWeb.Endpoint,
   ],
   cache_static_manifest: "priv/static/cache_manifest.json",
   http: [:inet6, port: System.get_env("PORT") || 4000],
-  check_origin: ["dbykov.com"]
+  check_origin: ["https://solitaire.dbykov.com/"]
 
 # Do not print debug messages in production
 config :logger, level: :info
