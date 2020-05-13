@@ -1,6 +1,6 @@
 defmodule SolitaireWeb.GameLive do
   use Phoenix.LiveView
-  alias Solitaire.Game.Sever, as: GameServer
+  alias Solitaire.Game.Server, as: GameServer
 
   @spec render([{any, any}] | map) :: any
   def render(assigns) do
@@ -24,24 +24,31 @@ defmodule SolitaireWeb.GameLive do
       |> assign(:pop, false)
       |> assign(:move_from_column, false)
       |> assign(:move_from_index, false)
-
+      |> assign(:choose_game, false)
 
     {:ok, socket}
   end
 
   defp start_unless_started(token) do
-    case GameServer.start_link(token) |> IO.inspect(label: "START LINK RES") do
+    case GameServer.start_link(%{token: token}) |> IO.inspect(label: "START LINK RES") do
       {:error, _} -> :error
       result -> result
     end
   end
 
-  def handle_event("new_game", _, socket) do
+  def handle_event("choose_new_game", _, socket) do
+    {:noreply, assign(socket, :choose_game, true)}
+  end
+
+  def handle_event("start_new_game", %{"type" => type, "count" => count}, socket) do
     token = socket.assigns[:token]
 
-    GameServer.restart(token)
+    GameServer.restart(token, %{type: type, count: count})
     state = GameServer.state(token)
-    new_socket = assign_game_state(socket, GameServer.state(token), token)
+
+    new_socket =
+      assign_game_state(socket, GameServer.state(token), token) |> assign(:choose_game, false)
+
     broadcast_game_state(token, state)
     {:noreply, new_socket}
   end

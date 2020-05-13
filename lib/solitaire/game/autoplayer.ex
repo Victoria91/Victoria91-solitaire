@@ -1,5 +1,5 @@
 defmodule Solitaire.Game.Autoplayer do
-  alias Solitaire.Game.Sever, as: GameServer
+  alias Solitaire.Game.Server, as: GameServer
 
   def start(token, opts \\ []) do
     async = Keyword.get(opts, :async, false)

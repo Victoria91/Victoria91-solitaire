@@ -1,19 +1,37 @@
-defmodule Solitaire.Game.Sever do
+defmodule Solitaire.Game.Server do
   use GenServer
 
   alias Solitaire.Statix
+  alias Solitaire.Game.MnesiaPersister
 
-  @spec start_link(any) :: :ignore | {:error, any} | {:ok, pid}
-  def start_link(token) do
-    GenServer.start_link(__MODULE__, %{token: token},
+  require Logger
+
+  @spec start_link(map()) :: :ignore | {:error, any} | {:ok, pid}
+  def start_link(%{token: token, type: type} = state) when type in [:klondike, :spider] do
+    GenServer.start_link(__MODULE__, state,
       spawn_opt: [fullsweep_after: 20],
       name: name(token)
     )
   end
 
-  def restart(token) do
+  def start_link(%{type: type} = params) do
+    start_link(params |> Map.merge(%{type: String.to_existing_atom(type)}))
+  end
+
+  def start_link(params) do
+    start_link(params |> Map.merge(%{type: type_from_config()}))
+  end
+
+  defp type_from_config, do: Application.get_env(:solitaire, :game)[:type]
+  defp available_types, do: Application.get_env(:solitaire, :game)[:available_types]
+
+  def restart(token, params) do
+    stop(token)
+    start_link(Map.merge(params, %{token: token}))
+  end
+
+  def stop(token) do
     GenServer.stop(name(token))
-    start_link(token)
   end
 
   defp name(token) do
@@ -28,8 +46,7 @@ defmodule Solitaire.Game.Sever do
 
   @spec init(any) :: {:ok, Game.t(), {:continue, :give_cards}}
   def init(state) do
-    {:ok, Map.merge(state, %{type: Application.get_env(:solitaire, :game)[:type]}),
-     {:continue, :give_cards}}
+    {:ok, state, {:continue, :give_cards}}
   end
 
   def move_to_foundation(token, attr) do
@@ -71,7 +88,7 @@ defmodule Solitaire.Game.Sever do
   def handle_continue(:give_cards, state) do
     measure("give_cards", fn ->
       new_state =
-        update_game_state(state, module(state).load_game(suit_count()))
+        update_game_state(state, module(state).load_game(suit_count(state)))
         |> put_deck_length()
 
       perform_automove_to_foundation(new_state)
@@ -164,7 +181,12 @@ defmodule Solitaire.Game.Sever do
     {:noreply, state}
   end
 
-  defp suit_count(), do: Application.get_env(:solitaire, :game)[:suit_count]
+  defp suit_count(%{count: count}) do
+    {val, _} = Integer.parse(count)
+    val
+  end
+
+  defp suit_count(_), do: Application.get_env(:solitaire, :game)[:suit_count]
 
   defp module(%{type: :klondike}), do: Solitaire.Game.Klondike
   defp module(_), do: Solitaire.Game.Spider
