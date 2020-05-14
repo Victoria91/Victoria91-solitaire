@@ -2,7 +2,6 @@ defmodule Solitaire.Game.Server do
   use GenServer
 
   alias Solitaire.Statix
-  alias Solitaire.Game.MnesiaPersister
 
   require Logger
 
@@ -23,7 +22,6 @@ defmodule Solitaire.Game.Server do
   end
 
   defp type_from_config, do: Application.get_env(:solitaire, :game)[:type]
-  defp available_types, do: Application.get_env(:solitaire, :game)[:available_types]
 
   def restart(token, params) do
     stop(token)
