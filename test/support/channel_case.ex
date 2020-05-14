@@ -26,5 +26,4 @@ defmodule SolitaireWeb.ChannelCase do
       @endpoint SolitaireWeb.Endpoint
     end
   end
-
 end
