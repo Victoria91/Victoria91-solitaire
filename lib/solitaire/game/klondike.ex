@@ -15,7 +15,7 @@ defmodule Solitaire.Game.Klondike do
       %{deck: rest_deck} =
       Enum.reduce(0..6, shuffle(), fn i, game -> Games.take_cards_to_col(game, i, i + 1, i) end)
 
-    Map.put(game, :deck, Games.split_deck_by(rest_deck, 3) ++ [[]])
+    Map.put(game, :deck, [[] | Games.split_deck_by(rest_deck, 3)])
   end
 
   @impl Games
@@ -81,7 +81,7 @@ defmodule Solitaire.Game.Klondike do
   defp move_from_deck_to_foundation(%{foundation: foundation, deck: deck} = game, suit) do
     game
     |> Map.put(:foundation, Foundation.push(foundation, suit))
-    |> Map.put(:deck, rest_deck(deck))
+    |> Map.put(:deck, deck |> rest_deck |> split_deck_if_reached_the_end())
   end
 
   @doc "Возвращает перемешанную колоду карт"
@@ -94,14 +94,24 @@ defmodule Solitaire.Game.Klondike do
     Берет следующую карту из колоды
   """
   @spec change(Game.t()) :: [tuple]
-  def change(%{deck: [h | [[] | t]]}) do
-    new_deck = (t ++ [h]) |> List.flatten() |> Games.split_deck_by(3)
-    new_deck ++ [[]]
+
+  def change(%{deck: [h | [[] | _] = rest]}) do
+    (rest ++ [h]) |> split_deck_if_reached_the_end()
+  end
+
+  def change(%{deck: [[] | _rest] = deck}) do
+    split_deck_if_reached_the_end(deck)
   end
 
   def change(%{deck: [h | rest]}) do
     rest ++ [h]
   end
+
+  defp split_deck_if_reached_the_end([[] | rest]) do
+    (rest |> List.flatten() |> Games.split_deck_by(3)) ++ [[]]
+  end
+
+  defp split_deck_if_reached_the_end(deck), do: deck
 
   def move_from_foundation(game, suit, to_col_num) when is_binary(suit),
     do: move_from_foundation(game, String.to_atom(suit), to_col_num)
@@ -134,10 +144,6 @@ defmodule Solitaire.Game.Klondike do
     rest_deck
   end
 
-  defp rest_deck([[_h | t] | [[] | rest]]) do
-    [t | rest] ++ [[]]
-  end
-
   defp rest_deck([[_current | rest] | rest_deck]) do
     [rest | rest_deck]
   end
@@ -155,7 +161,7 @@ defmodule Solitaire.Game.Klondike do
     if deck_non_empty?(deck) do
       current = current(deck)
 
-      deck = rest_deck(deck)
+      deck = rest_deck(deck) |> split_deck_if_reached_the_end()
 
       col = %{cards: cards} = Enum.at(cols, column)
       upper_card = List.first(cards)
