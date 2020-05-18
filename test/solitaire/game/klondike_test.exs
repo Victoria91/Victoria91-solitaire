@@ -20,7 +20,19 @@ defmodule Solitaire.Game.KlondikeTest do
 
     test "if riched end of the deck - splits deck again by three, changes deck" do
       deck = [
-        [{:club, 5}, {:club, :K}, {:spade, :K}],
+        [heart: 2, spade: :K, diamond: 8],
+        [],
+        [heart: 3, club: 5],
+        [club: :K, heart: 7, club: 3]
+      ]
+
+      new_deck = Klondike.change(%{deck: deck})
+      deck_chunk_length = Enum.map(new_deck, &length/1)
+      assert deck_chunk_length == [3, 3, 2, 0]
+    end
+
+    test "rest deck splitting" do
+      deck = [
         [],
         [{:heart, :A}, {:club, 2}],
         [{:heart, 8}, {:club, 10}, {:club, 6}]
@@ -28,7 +40,7 @@ defmodule Solitaire.Game.KlondikeTest do
 
       new_deck = Klondike.change(%{deck: deck})
       deck_chunk_length = Enum.map(new_deck, &length/1)
-      assert deck_chunk_length == [3, 3, 2, 0]
+      assert deck_chunk_length == [3, 2, 0]
     end
   end
 
@@ -93,7 +105,7 @@ defmodule Solitaire.Game.KlondikeTest do
         |> Map.put(:cols, cols)
 
       %{deck: result_deck, cols: result_cols} = Klondike.move_from_deck(game, 2)
-      assert result_deck == Enum.slice(initial_deck, 1..-1)
+      assert result_deck == [[{:diamond, 2}, {:heart, :D}, {:heart, 3}], []]
       %{cards: result_cards} = Enum.at(result_cols, 2)
       assert result_cards == [{:heart, 4}, {:spade, 5}]
     end
@@ -147,8 +159,8 @@ defmodule Solitaire.Game.KlondikeTest do
 
       assert deck == [
                [{:heart, :D}, {:club, 8}],
-               [{:club, 9}, {:diamond, 9}, {:club, 5}],
-               []
+               [],
+               [{:club, 9}, {:diamond, 9}, {:club, 5}]
              ]
     end
   end
@@ -168,6 +180,25 @@ defmodule Solitaire.Game.KlondikeTest do
 
       assert %{deck: [[]], foundation: %{spade: 2}} ==
                Klondike.move_to_foundation(game, :deck)
+    end
+
+    test "rest deck splitting" do
+      game = %{
+        deck: [
+          [heart: 2, spade: :K, diamond: 8],
+          [],
+          [heart: 3, club: 5, heart: 10]
+        ],
+        foundation: %{heart: :A}
+      }
+
+      %{
+        deck: deck,
+        foundation: %{heart: 2}
+      } = Klondike.move_to_foundation(game, :deck)
+
+      deck_lengths = deck |> Enum.map(&length/1)
+      assert deck_lengths == [2, 0, 3]
     end
   end
 
