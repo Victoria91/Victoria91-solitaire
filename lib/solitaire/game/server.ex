@@ -14,11 +14,11 @@ defmodule Solitaire.Game.Server do
   end
 
   def start_link(%{type: type} = params) do
-    start_link(params |> Map.merge(%{type: String.to_existing_atom(type)}))
+    start_link(Map.merge(params, %{type: String.to_existing_atom(type)}))
   end
 
   def start_link(params) do
-    start_link(params |> Map.merge(%{type: type_from_config()}))
+    start_link(Map.merge(params, %{type: type_from_config()}))
   end
 
   defp type_from_config, do: Application.get_env(:solitaire, :game)[:type]
@@ -86,8 +86,7 @@ defmodule Solitaire.Game.Server do
   def handle_continue(:give_cards, state) do
     measure("give_cards", fn ->
       new_state =
-        update_game_state(state, module(state).load_game(suit_count(state)))
-        |> put_deck_length()
+        put_deck_length(update_game_state(state, module(state).load_game(suit_count(state))))
 
       perform_automove_to_foundation(new_state)
       {:noreply, new_state}
@@ -172,10 +171,9 @@ defmodule Solitaire.Game.Server do
     end)
   end
 
-  def perform_automove_to_foundation(_), do: false
+  def perform_automove_to_foundation(_state), do: false
 
   def handle_info(_msg, state) do
-    # IO.inspect(msg)
     {:noreply, state}
   end
 
@@ -184,8 +182,8 @@ defmodule Solitaire.Game.Server do
     val
   end
 
-  defp suit_count(_), do: Application.get_env(:solitaire, :game)[:suit_count]
+  defp suit_count(_state), do: Application.get_env(:solitaire, :game)[:suit_count]
 
   defp module(%{type: :klondike}), do: Solitaire.Game.Klondike
-  defp module(_), do: Solitaire.Game.Spider
+  defp module(_state), do: Solitaire.Game.Spider
 end

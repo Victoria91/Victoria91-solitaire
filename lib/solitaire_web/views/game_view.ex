@@ -13,7 +13,7 @@ defmodule SolitaireWeb.GameView do
   def card_rank_class(card) do
     case Map.fetch(@rank_classes, rank(card)) do
       {:ok, class} -> class
-      _ -> ""
+      _result -> ""
     end
   end
 

@@ -21,7 +21,6 @@ defmodule Solitaire.Games do
     Возвращает tuple, первый элемент которого - полученные `count` карт из колоды,
     второй - оставшаяся колода
   """
-
   @spec take_card_from_deck(list(tuple), integer) :: {[tuple], [tuple]}
   def take_card_from_deck(deck, count) do
     Enum.split(deck, count)
@@ -74,14 +73,14 @@ defmodule Solitaire.Games do
 
     for_move_count = length(from_cards) - index
 
-    {from_column, removed_cards} = take_cards_from_column(from_column, for_move_count)
+    {new_from_column, removed_cards} = take_cards_from_column(from_column, for_move_count)
 
     if can_move_function.(to, removed_cards) && index > unplayed - 1 do
       to_column = %{to_column | cards: removed_cards ++ to_cards}
 
       {:ok,
        game
-       |> update_cols(from_col_num, from_column)
+       |> update_cols(from_col_num, new_from_column)
        |> update_cols(to_col_num, to_column)}
     else
       {:error, game}
@@ -111,19 +110,18 @@ defmodule Solitaire.Games do
         module
       ) do
     {new_from_column, _moved_cards} =
-      Enum.at(cols, from_col_num)
-      |> take_cards_from_column(cards_count)
+      take_cards_from_column(Enum.at(cols, from_col_num), cards_count)
 
     game
     |> Map.put(:foundation, module.push(foundation, suit))
     |> update_cols(from_col_num, new_from_column)
   end
 
-  defp maybe_decrease_unplayed(_, 0), do: 0
+  defp maybe_decrease_unplayed(_length, 0), do: 0
 
   defp maybe_decrease_unplayed(length_of_cards_rest, unplayed)
        when length_of_cards_rest > unplayed,
        do: unplayed
 
-  defp maybe_decrease_unplayed(_, unplayed), do: unplayed - 1
+  defp maybe_decrease_unplayed(_length, unplayed), do: unplayed - 1
 end

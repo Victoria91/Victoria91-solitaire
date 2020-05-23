@@ -20,7 +20,7 @@ defmodule Solitaire.MixProject do
   def application do
     [
       mod: {Solitaire.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :mnesia]
     ]
   end
 
@@ -40,10 +40,11 @@ defmodule Solitaire.MixProject do
       {:gettext, ">= 0.11.0"},
       {:jason, ">= 1.0.0"},
       {:plug_cowboy, ">= 2.1.0"},
-       {:phoenix_live_view, ">= 0.0.0"},
+      {:phoenix_live_view, ">= 0.0.0"},
       {:observer_cli, ">= 1.5.0"},
       {:statix, ">= 1.2.0"},
-      {:statsd_logger, ">= 1.1.0", only: [:dev, :test]}
+      {:statsd_logger, ">= 1.1.0", only: [:dev, :test]},
+      {:credo, ">= 1.4.0", only: [:dev, :test], runtime: false}
     ]
   end
 
@@ -56,7 +57,7 @@ defmodule Solitaire.MixProject do
   defp aliases do
     [
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
-      "ecto.reset": ["ecto.drop", "ecto.setup"],
+      "ecto.reset": ["ecto.drop", "ecto.setup"]
     ]
   end
 end

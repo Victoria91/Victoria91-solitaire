@@ -22,7 +22,7 @@ defmodule Solitaire.Game.Autoplayer do
           foundation: %{"club" => "K", "diamond" => "K", "heart" => "K", "spade" => "K"}
         } = game,
         _pid,
-        _
+        _count
       ),
       do: game
 
