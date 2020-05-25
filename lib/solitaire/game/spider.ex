@@ -24,7 +24,8 @@ defmodule Solitaire.Game.Spider do
   end
 
   def deck(suit_count) do
-    Enum.flat_map(Games.ranks(), fn r ->
+    Games.ranks()
+    |> Enum.flat_map(fn r ->
       Enum.map(Enum.take(Games.suits(), suit_count), fn s -> {s, r} end)
     end)
     |> List.duplicate(
@@ -52,7 +53,7 @@ defmodule Solitaire.Game.Spider do
         Solitaire.Game.Spider.Foundation
       )
     else
-      _ ->
+      _result ->
         game
     end
   end
@@ -67,8 +68,7 @@ defmodule Solitaire.Game.Spider do
         col = %{cards: cards} = Enum.at(cols, i)
         new_col = %{col | cards: [num | cards]}
 
-        game
-        |> Games.update_cols(i, new_col)
+        Games.update_cols(game, i, new_col)
       end)
       |> Map.put(:deck, rest)
     else
@@ -76,7 +76,7 @@ defmodule Solitaire.Game.Spider do
     end
   end
 
-  def move_from_deck(game, _), do: game
+  def move_from_deck(game, _param), do: game
 
   def change(game), do: game
 
@@ -98,9 +98,9 @@ defmodule Solitaire.Game.Spider do
   end
 
   @impl Games
-  def can_move?(nil, _), do: true
+  def can_move?(nil, _from_card), do: true
 
-  def can_move?(_, nil), do: false
+  def can_move?(_to_card, nil), do: false
 
   def can_move?({_, rank}, {_, rank}), do: false
 
@@ -110,7 +110,7 @@ defmodule Solitaire.Game.Spider do
          true <- cards_in_sequence?(cards_for_move ++ [to]) do
       true
     else
-      _ -> false
+      _result -> false
     end
   end
 

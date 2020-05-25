@@ -10,7 +10,7 @@ defmodule Solitaire.Game.Klondike do
   @deck Enum.flat_map(Games.ranks(), fn r -> Enum.map(Games.suits(), fn s -> {s, r} end) end)
 
   @impl Solitaire.Games
-  def load_game(_) do
+  def load_game(_params) do
     game =
       %{deck: rest_deck} =
       Enum.reduce(0..6, shuffle(), fn i, game -> Games.take_cards_to_col(game, i, i + 1, i) end)
@@ -96,7 +96,7 @@ defmodule Solitaire.Game.Klondike do
   @spec change(Game.t()) :: [tuple]
 
   def change(%{deck: [h | [[] | _] = rest]}) do
-    (rest ++ [h]) |> split_deck_if_reached_the_end()
+    split_deck_if_reached_the_end(rest ++ [h])
   end
 
   def change(%{deck: [[] | _rest] = deck}) do
@@ -114,7 +114,7 @@ defmodule Solitaire.Game.Klondike do
   defp split_deck_if_reached_the_end(deck), do: deck
 
   def move_from_foundation(game, suit, to_col_num) when is_binary(suit),
-    do: move_from_foundation(game, String.to_atom(suit), to_col_num)
+    do: move_from_foundation(game, String.to_existing_atom(suit), to_col_num)
 
   def move_from_foundation(%{cols: cols, foundation: foundation} = game, suit, to_col_num) do
     from_rank = Map.fetch!(foundation, suit)
@@ -161,7 +161,7 @@ defmodule Solitaire.Game.Klondike do
     if deck_non_empty?(deck) do
       current = current(deck)
 
-      deck = rest_deck(deck) |> split_deck_if_reached_the_end()
+      deck = deck |> rest_deck() |> split_deck_if_reached_the_end()
 
       col = %{cards: cards} = Enum.at(cols, column)
       upper_card = List.first(cards)
@@ -181,7 +181,7 @@ defmodule Solitaire.Game.Klondike do
   end
 
   defp deck_non_empty?(deck) do
-    deck |> List.flatten() != []
+    List.flatten(deck) != []
   end
 
   @impl Games
@@ -193,9 +193,9 @@ defmodule Solitaire.Game.Klondike do
     rank == List.last(Games.ranks())
   end
 
-  def can_move?(nil, _), do: false
+  def can_move?(nil, _from_card), do: false
 
-  def can_move?(_, nil), do: false
+  def can_move?(_to_card, nil), do: false
 
   def can_move?({suit, _}, {suit, _}), do: false
 
@@ -208,7 +208,7 @@ defmodule Solitaire.Game.Klondike do
          true <- suits_of_different_color?(from_suit, to_col_suit) do
       true
     else
-      _ -> false
+      _result -> false
     end
   end
 

@@ -18,7 +18,7 @@ defmodule Solitaire.Game.ServerTest do
     test "when there is state in mnesia - loads it to server state", %{token: token, state: state} do
       MnesiaPersister.save(token, :klondike, state)
       {:ok, _pid} = GameServer.start_link(%{token: token, type: :klondike})
-      assert state == GameServer.state(token) |> Map.drop([:token, :type])
+      assert state == Map.drop(GameServer.state(token), [:token, :type])
     end
 
     test "if no state in mnesia - loads new game", %{token: token} do

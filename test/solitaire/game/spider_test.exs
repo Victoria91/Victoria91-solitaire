@@ -11,8 +11,7 @@ defmodule Solitaire.Game.SpiderTest do
   describe "#move_to_foundation" do
     test "1", %{game: %{cols: cols} = game} do
       new_cols =
-        cols
-        |> List.replace_at(0, %{
+        List.replace_at(cols, 0, %{
           cards: [
             {:spade, :A},
             {:spade, 2},
@@ -40,8 +39,7 @@ defmodule Solitaire.Game.SpiderTest do
 
     test "2", %{game: %{cols: cols} = game} do
       new_cols =
-        cols
-        |> List.replace_at(0, %{
+        List.replace_at(cols, 0, %{
           cards: [
             {:spade, :A},
             {:spade, 2},

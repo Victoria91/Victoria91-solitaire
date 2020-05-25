@@ -2,15 +2,17 @@ defmodule SolitaireWeb.GameLive do
   use Phoenix.LiveView
   alias Solitaire.Game.Server, as: GameServer
 
+  require Logger
+
   @spec render([{any, any}] | map) :: any
   def render(assigns) do
     Phoenix.View.render(SolitaireWeb.GameView, "index.html", assigns)
   end
 
-  def mount(_params, params, socket) do
-    params |> IO.inspect()
+  def mount(_params, session, socket) do
+    Logger.info("Session data: #{inspect(session)}")
 
-    token = params["_csrf_token"]
+    token = session["_csrf_token"]
 
     start_unless_started(token)
 
@@ -19,7 +21,8 @@ defmodule SolitaireWeb.GameLive do
     state = GameServer.state(token)
 
     socket =
-      assign_game_state(socket, state, token)
+      socket
+      |> assign_game_state(state, token)
       |> assign(:move_from_deck, false)
       |> assign(:pop, false)
       |> assign(:move_from_column, false)
@@ -30,136 +33,164 @@ defmodule SolitaireWeb.GameLive do
   end
 
   defp start_unless_started(token) do
-    case GameServer.start_link(%{token: token}) |> IO.inspect(label: "START LINK RES") do
+    start_game_res = GameServer.start_link(%{token: token})
+    Logger.info("Start game result for token: #{inspect(token)}: #{inspect(start_game_res)}")
+
+    case start_game_res do
       {:error, _} -> :error
       result -> result
     end
   end
 
-  def handle_event("choose_new_game", _, socket) do
+  def handle_event("choose_new_game", _params, socket) do
     {:noreply, assign(socket, :choose_game, true)}
   end
 
-  def handle_event("start_new_game", %{"type" => type, "count" => count}, socket) do
-    token = socket.assigns[:token]
-
+  def handle_event("start_new_game", %{"type" => type, "count" => count}, %{
+        assigns: %{token: token} = socket
+      }) do
     GameServer.restart(token, %{type: type, count: count})
     state = GameServer.state(token)
 
     new_socket =
-      assign_game_state(socket, GameServer.state(token), token) |> assign(:choose_game, false)
+      assign(
+        assign_game_state(socket, GameServer.state(token), token),
+        :choose_game,
+        false
+      )
 
     broadcast_game_state(token, state)
     {:noreply, new_socket}
   end
 
-  def handle_event("move_from_deck", _val, socket) do
-    new_socket =
-      if socket.assigns[:type] == :klondike do
-        assign(socket, :move_from_deck, true)
-      else
-        token = socket.assigns[:token]
+  def handle_event("move_from_deck", _params, %{assigns: %{type: :klondike}} = socket) do
+    {:noreply, assign(socket, :move_from_deck, true)}
+  end
 
-        state = GameServer.move_from_deck(token, [])
-        broadcast_game_state(token, state)
-        assign_game_state(socket, state, token)
-      end
+  def handle_event("move_from_deck", _params, %{assigns: %{token: token}} = socket) do
+    state = GameServer.move_from_deck(token, [])
+    broadcast_game_state(token, state)
 
-    IO.inspect("SELECTED")
+    {:noreply, assign_game_state(socket, state, token)}
+  end
+
+  def handle_event("put", _params, %{assigns: %{move_from_deck: true, token: token}} = socket) do
+    game = GameServer.move_to_foundation(token, :deck)
+    new_socket = assign_game_state(socket, game, token)
+    broadcast_game_state(token, game)
 
     {:noreply, new_socket}
   end
 
-  def handle_event("put", params, socket) do
-    IO.inspect("put")
-    token = socket.assigns[:token]
+  def handle_event(
+        "put",
+        _params,
+        %{assigns: %{move_from_column: from_column, token: token}} = socket
+      )
+      when is_integer(from_column) do
+    state = GameServer.move_to_foundation(token, from_column)
+    new_socket = assign(assign_game_state(socket, state, token), :move_from_column, false)
+    broadcast_game_state(token, state)
 
-    cond do
-      socket.assigns[:move_from_deck] ->
-        game = GameServer.move_to_foundation(token, :deck)
-        new_socket = assign_game_state(socket, game, token)
-        broadcast_game_state(token, game)
-
-        {:noreply, new_socket}
-
-      from_column = socket.assigns[:move_from_column] ->
-        token = socket.assigns.token |> IO.inspect()
-        state = GameServer.move_to_foundation(token, from_column)
-        new_socket = assign_game_state(socket, state, token) |> assign(:move_from_column, false)
-        broadcast_game_state(token, state)
-
-        {:noreply, new_socket}
-
-      true ->
-        new_socket = socket |> assign(:pop, params["suit"])
-
-        {:noreply, new_socket}
-    end
+    {:noreply, new_socket}
   end
 
-  def handle_event("move", %{"column" => column} = params, socket) do
-    column = parse_integer!(column)
+  def handle_event("put", %{"suit" => suit}, socket) do
+    {:noreply, assign(socket, :pop, suit)}
+  end
 
-    cond do
-      suit = socket.assigns[:pop] ->
-        token = socket.assigns.token
-        state = GameServer.move_from_foundation(token, suit, column)
-        new_socket = assign_game_state(socket, state, token) |> assign(:pop, false)
-        broadcast_game_state(token, state)
+  def handle_event(event, %{"column" => column} = params, socket) when is_binary(column) do
+    new_params = %{params | "column" => parse_integer!(column)}
+    handle_event(event, new_params, socket)
+  end
 
-        {:noreply, new_socket}
+  @doc """
+    Складывание карты из базы в столбцы
+  """
+  def handle_event(
+        "move",
+        %{"column" => column},
+        %{assigns: %{token: token, pop: suit}} = socket
+      )
+      when is_binary(suit) do
+    state = GameServer.move_from_foundation(token, suit, column)
+    new_socket = assign(assign_game_state(socket, state, token), :pop, false)
+    broadcast_game_state(token, state)
 
-      socket.assigns[:move_from_deck] ->
-        token = socket.assigns.token
-        state = GameServer.move_from_deck(token, column)
-        new_socket = assign_game_state(socket, state, token) |> assign(:move_from_deck, false)
-        broadcast_game_state(token, state)
+    {:noreply, new_socket}
+  end
 
-        {:noreply, new_socket}
+  @doc """
+    Складывание карты из колоды в столбец
+  """
+  def handle_event(
+        "move",
+        %{"column" => column},
+        %{assigns: %{token: token, move_from_deck: true}} = socket
+      ) do
+    state = GameServer.move_from_deck(token, column)
+    new_socket = assign(assign_game_state(socket, state, token), :move_from_deck, false)
+    broadcast_game_state(token, state)
 
-      (from_col_num = socket.assigns[:move_from_column]) && socket.assigns[:move_from_index] ->
-        token = socket.assigns.token |> IO.inspect()
+    {:noreply, new_socket}
+  end
 
-        state =
-          GameServer.move_from_column(
-            token,
-            {from_col_num, socket.assigns[:move_from_index]},
-            column
-          )
+  @doc """
+    Перекладывание карты из одного столбца в другой
+  """
+  def handle_event(
+        "move",
+        %{"column" => column},
+        %{
+          assigns: %{
+            token: token,
+            move_from_column: from_col_num,
+            move_from_index: move_from_index
+          }
+        } = socket
+      )
+      when is_integer(from_col_num) and is_integer(move_from_index) do
+    state =
+      GameServer.move_from_column(
+        token,
+        {from_col_num, socket.assigns[:move_from_index]},
+        column
+      )
 
-        new_socket =
-          assign_game_state(socket, state, token)
-          |> assign(:move_from_column, false)
-          |> assign(:move_from_index, false)
+    new_socket =
+      socket
+      |> assign_game_state(state, token)
+      |> assign(:move_from_column, false)
+      |> assign(:move_from_index, false)
 
-        broadcast_game_state(token, state)
+    broadcast_game_state(token, state)
 
-        {:noreply, new_socket}
+    {:noreply, new_socket}
+  end
 
-      params["index"] ->
-        new_socket =
-          socket
-          |> assign(:move_from_column, column)
-          |> assign(:move_from_index, parse_integer!(params["index"]))
+  @doc """
+    Сохранение в сокете выбранного столбца
+  """
+  def handle_event(
+        "move",
+        %{"index" => index, "column" => column},
+        socket
+      ) do
+    new_socket =
+      socket
+      |> assign(:move_from_column, column)
+      |> assign(:move_from_index, parse_integer!(index))
 
-        {:noreply, new_socket}
-
-      true ->
-        {:noreply, socket}
-    end
+    {:noreply, new_socket}
   end
 
   @spec handle_event(<<_::48>>, any, Phoenix.LiveView.Socket.t()) :: {:noreply, any}
-  def handle_event("change", _val, socket) do
-    token = socket.assigns.token
-
+  def handle_event("change", _val, %{assigns: %{token: token}} = socket) do
     state = GameServer.change(token)
 
     broadcast_game_state(token, state)
 
-    new_socket =
-      assign_game_state(socket, state, token)
-      |> assign(:move_from_deck, false)
+    new_socket = assign(assign_game_state(socket, state, token), :move_from_deck, false)
 
     {:noreply, new_socket}
   end
@@ -181,7 +212,8 @@ defmodule SolitaireWeb.GameLive do
   end
 
   defp assign_game_state(socket, state, token) do
-    assign(socket, :cols, state.cols)
+    socket
+    |> assign(:cols, state.cols)
     |> assign(:deck_length, state.deck_length)
     |> assign(:deck, state.deck)
     |> assign(:foundation, state.foundation)
@@ -194,12 +226,12 @@ defmodule SolitaireWeb.GameLive do
     played_count =
       Enum.reduce(foundation, 0, fn
         {_suit, count}, acc when not is_nil(count) -> count + acc
-        _, acc -> acc
+        _val, acc -> acc
       end)
 
-    socket
-    |> assign(:unplayed_fnd_cols_count, 8 - played_count)
+    assign(socket, :unplayed_fnd_cols_count, 8 - played_count)
   end
 
-  defp assign_blank_fnd_cols_count(socket, _), do: assign(socket, :unplayed_fnd_cols_count, 0)
+  defp assign_blank_fnd_cols_count(socket, _game_state),
+    do: assign(socket, :unplayed_fnd_cols_count, 0)
 end

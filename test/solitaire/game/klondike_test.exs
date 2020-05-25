@@ -56,15 +56,15 @@ defmodule Solitaire.Game.KlondikeTest do
         |> List.replace_at(0, %{cards: [], unplayed: 0})
 
       game = %{game | cols: new_cols}
-      {:ok, %{cols: cols}} = Klondike.move_from_column(game, {3, 0}, 0)
-      assert List.first(cols) == %{cards: [{:heart, :K}], unplayed: 0}
-      assert Enum.at(cols, 3) == %{cards: [], unplayed: 0}
+      {:ok, %{cols: resulted_cols}} = Klondike.move_from_column(game, {3, 0}, 0)
+      assert List.first(resulted_cols) == %{cards: [{:heart, :K}], unplayed: 0}
+      assert Enum.at(resulted_cols, 3) == %{cards: [], unplayed: 0}
     end
   end
 
   describe "#move_from_deck/2" do
     test "1", %{game: game} do
-      %{cols: cols} = game
+      %{cols: init_cols} = game
 
       initial_deck = [
         [{:heart, 4}],
@@ -74,7 +74,7 @@ defmodule Solitaire.Game.KlondikeTest do
       ]
 
       to_column = %{cards: [{:spade, 5}], unplayed: 0}
-      cols = List.replace_at(cols, 2, to_column)
+      cols = List.replace_at(init_cols, 2, to_column)
 
       game =
         game
@@ -88,7 +88,7 @@ defmodule Solitaire.Game.KlondikeTest do
     end
 
     test 2, %{game: game} do
-      %{cols: cols} = game
+      %{cols: init_cols} = game
 
       initial_deck = [
         [{:heart, 4}],
@@ -97,7 +97,7 @@ defmodule Solitaire.Game.KlondikeTest do
       ]
 
       to_column = %{cards: [{:spade, 5}], unplayed: 0}
-      cols = List.replace_at(cols, 2, to_column)
+      cols = List.replace_at(init_cols, 2, to_column)
 
       game =
         game
@@ -119,9 +119,7 @@ defmodule Solitaire.Game.KlondikeTest do
 
       %{cols: cols} = game
 
-      new_cols =
-        cols
-        |> List.replace_at(3, %{cards: [{:club, 6}], unplayed: 0})
+      new_cols = List.replace_at(cols, 3, %{cards: [{:club, 6}], unplayed: 0})
 
       game =
         game
@@ -197,7 +195,7 @@ defmodule Solitaire.Game.KlondikeTest do
         foundation: %{heart: 2}
       } = Klondike.move_to_foundation(game, :deck)
 
-      deck_lengths = deck |> Enum.map(&length/1)
+      deck_lengths = Enum.map(deck, &length/1)
       assert deck_lengths == [2, 0, 3]
     end
   end
