@@ -23,11 +23,6 @@ defmodule Solitaire.Game.Server do
 
   defp type_from_config, do: Application.get_env(:solitaire, :game)[:type]
 
-  def restart(token, params) do
-    stop(token)
-    start_link(Map.merge(params, %{token: token}))
-  end
-
   def stop(token) do
     GenServer.stop(name(token))
   end
