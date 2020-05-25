@@ -25,7 +25,7 @@ defmodule Solitaire.Game.Supervisor do
   end
 
   def stop_game(token) do
-    pid = GenServer.whereis({:global, token})
+    pid = Server.game_pid(token)
     DynamicSupervisor.terminate_child(global_name(), pid)
   end
 
