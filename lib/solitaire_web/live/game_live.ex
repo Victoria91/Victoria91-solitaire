@@ -5,7 +5,6 @@ defmodule SolitaireWeb.GameLive do
 
   require Logger
 
-  @spec render([{any, any}] | map) :: any
   def render(assigns) do
     Phoenix.View.render(SolitaireWeb.GameView, "index.html", assigns)
   end
@@ -149,22 +148,28 @@ defmodule SolitaireWeb.GameLive do
         } = socket
       )
       when is_integer(from_col_num) and is_integer(move_from_index) do
-    state =
-      GameServer.move_from_column(
-        token,
-        {from_col_num, socket.assigns[:move_from_index]},
-        column
-      )
+    case GameServer.move_from_column(
+           token,
+           {from_col_num, socket.assigns[:move_from_index]},
+           column
+         ) do
+      {:ok, state} ->
+        new_socket =
+          socket
+          |> assign_game_state(state, token)
+          |> assign(:move_from_column, false)
+          |> assign(:move_from_index, false)
 
-    new_socket =
-      socket
-      |> assign_game_state(state, token)
-      |> assign(:move_from_column, false)
-      |> assign(:move_from_index, false)
+        broadcast_game_state(token, state)
 
-    broadcast_game_state(token, state)
+        {:noreply, new_socket}
 
-    {:noreply, new_socket}
+      {:error, _} ->
+        {:noreply,
+         socket
+         |> assign(:move_from_column, false)
+         |> assign(:move_from_index, false)}
+    end
   end
 
   @doc """
@@ -183,7 +188,6 @@ defmodule SolitaireWeb.GameLive do
     {:noreply, new_socket}
   end
 
-  @spec handle_event(<<_::48>>, any, Phoenix.LiveView.Socket.t()) :: {:noreply, any}
   def handle_event("change", _val, %{assigns: %{token: token}} = socket) do
     state = GameServer.change(token)
 

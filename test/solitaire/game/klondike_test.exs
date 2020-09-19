@@ -217,7 +217,7 @@ defmodule Solitaire.Game.KlondikeTest do
                Klondike.move_to_foundation(game, 0)
     end
 
-    # TODO: нужен генератор колоды, а нет вот это вот все
+    # TO-DO: нужен генератор колоды, а нет вот это вот все
     test "unplayed handling" do
       game = %{
         cols: [%{cards: [{:spade, 2}, {:heart, 3}, {:spade, 4}], unplayed: 1}],

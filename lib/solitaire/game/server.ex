@@ -39,7 +39,7 @@ defmodule Solitaire.Game.Server do
     end)
   end
 
-  @spec init(any) :: {:ok, Game.t(), {:continue, :give_cards}}
+  @spec init(any) :: {:ok, Games.t(), {:continue, :give_cards}}
   def init(state) do
     {:ok, state, {:continue, :give_cards}}
   end
@@ -140,13 +140,16 @@ defmodule Solitaire.Game.Server do
   end
 
   def handle_call({:move_from_column, from, to}, _from, state) do
-    {_, result} = module(state).move_from_column(state, from, to)
+    case module(state).move_from_column(state, from, to) do
+      {:ok, result} ->
+        new_state = update_game_state(state, result)
 
-    new_state = update_game_state(state, result)
+        perform_automove_to_foundation(new_state)
+        {:reply, {:ok, new_state}, new_state}
 
-    perform_automove_to_foundation(new_state)
-
-    {:reply, new_state, new_state}
+      {:error, _result} ->
+        {:reply, {:error, state}, state}
+    end
   end
 
   defp put_deck_length(%{deck: deck} = state) do
