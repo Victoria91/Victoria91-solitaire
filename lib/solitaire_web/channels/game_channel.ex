@@ -12,21 +12,31 @@ defmodule SolitaireWeb.GameChannel do
 
     Phoenix.PubSub.subscribe(Solitaire.PubSub, "game:#{token}")
 
-    {:ok, %{data: fetch_cards(state)}, assign(socket, :token, token)}
+    {:ok, fetch_game_state(state), assign(socket, :token, token)}
   end
 
   def handle_info({:tick, game}, socket) do
-    broadcast!(socket, "update_game", %{data: fetch_cards(game)})
+    broadcast!(socket, "update_game", fetch_game_state(game))
 
     {:noreply, socket}
   end
 
-  def fetch_cards(%{cols: cols}) do
-    Enum.map(cols, fn %{cards: cards} = map -> %{map | cards: convert_keyword_to_list(cards)} end)
+  def fetch_game_state(%{cols: cols, deck: deck, deck_length: deck_length}) do
+    %{
+      columns:
+        Enum.map(cols, fn %{cards: cards} = map ->
+          %{map | cards: convert_keyword_to_list(cards)}
+        end),
+      deck_length: deck_length,
+      deck: deck |> Enum.map(&convert_keyword_to_list/1) |> List.first()
+    }
   end
 
   defp convert_keyword_to_list(kw) do
-    Enum.map(kw, fn {k, v} -> [k, v] end)
+    Enum.map(kw, fn
+      [] -> []
+      {k, v} -> [k, v]
+    end)
   end
 
   def handle_in(
@@ -40,10 +50,15 @@ defmodule SolitaireWeb.GameChannel do
       ) do
     case GameServer.move_from_column(token, {from_column, card_index}, to_column) do
       {:ok, new_state} ->
-        {:reply, {:ok, %{data: fetch_cards(new_state)}}, socket}
+        {:reply, {:ok, fetch_game_state(new_state)}, socket}
 
       {:error, _} ->
         {:reply, :error, socket}
     end
+  end
+
+  def handle_in("change", _params, %{assigns: %{token: token}} = socket) do
+    new_state = GameServer.change(token)
+    {:reply, {:ok, fetch_game_state(new_state)}, socket}
   end
 end
