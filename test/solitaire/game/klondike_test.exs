@@ -81,7 +81,7 @@ defmodule Solitaire.Game.KlondikeTest do
         |> Map.put(:deck, initial_deck)
         |> Map.put(:cols, cols)
 
-      %{deck: result_deck, cols: result_cols} = Klondike.move_from_deck(game, 2)
+      {:ok, %{deck: result_deck, cols: result_cols}} = Klondike.move_from_deck(game, 2)
       assert result_deck == Enum.slice(initial_deck, 1..-1)
       %{cards: result_cards} = Enum.at(result_cols, 2)
       assert result_cards == [{:heart, 4}, {:spade, 5}]
@@ -104,7 +104,7 @@ defmodule Solitaire.Game.KlondikeTest do
         |> Map.put(:deck, initial_deck)
         |> Map.put(:cols, cols)
 
-      %{deck: result_deck, cols: result_cols} = Klondike.move_from_deck(game, 2)
+      {:ok, %{deck: result_deck, cols: result_cols}} = Klondike.move_from_deck(game, 2)
       assert result_deck == [[{:diamond, 2}, {:heart, :D}, {:heart, 3}], []]
       %{cards: result_cards} = Enum.at(result_cols, 2)
       assert result_cards == [{:heart, 4}, {:spade, 5}]
@@ -126,7 +126,7 @@ defmodule Solitaire.Game.KlondikeTest do
         |> Map.put(:deck, deck)
         |> Map.put(:cols, new_cols)
 
-      %{deck: result_deck} = Klondike.move_from_deck(game, 3)
+      {:ok, %{deck: result_deck}} = Klondike.move_from_deck(game, 3)
 
       assert result_deck == [
                [{:club, 6}, {:diamond, :A}],
@@ -148,7 +148,7 @@ defmodule Solitaire.Game.KlondikeTest do
         deck_length: 1
       }
 
-      %{cols: cols, deck: deck} = Klondike.move_from_deck(game, 0)
+      {:ok, %{cols: cols, deck: deck}} = Klondike.move_from_deck(game, 0)
 
       assert List.first(cols) == %{
                cards: [{:heart, :J}, {:club, :D}, {:diamond, :K}],

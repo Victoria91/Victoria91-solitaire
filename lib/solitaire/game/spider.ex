@@ -62,21 +62,24 @@ defmodule Solitaire.Game.Spider do
 
   def move_from_deck(%{deck: [next | rest], cols: cols} = game, __) do
     if all_cols_are_non_empty?(cols) do
-      next
-      |> Enum.with_index()
-      |> Enum.reduce(game, fn {num, i}, game ->
-        col = %{cards: cards} = Enum.at(cols, i)
-        new_col = %{col | cards: [num | cards]}
+      new_game =
+        next
+        |> Enum.with_index()
+        |> Enum.reduce(game, fn {num, i}, game ->
+          col = %{cards: cards} = Enum.at(cols, i)
+          new_col = %{col | cards: [num | cards]}
 
-        Games.update_cols(game, i, new_col)
-      end)
-      |> Map.put(:deck, rest)
+          Games.update_cols(game, i, new_col)
+        end)
+        |> Map.put(:deck, rest)
+
+      {:ok, new_game}
     else
-      game
+      {:error, game}
     end
   end
 
-  def move_from_deck(game, _param), do: game
+  def move_from_deck(game, _param), do: {:error, game}
 
   def change(game), do: game
 

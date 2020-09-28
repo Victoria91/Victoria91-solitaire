@@ -153,7 +153,8 @@ defmodule Solitaire.Game.Klondike do
   end
 
   @impl Games
-  @spec move_from_deck(%{cols: any, deck: [...]}, integer) :: %{cols: any, deck: [...]}
+  @spec move_from_deck(%{cols: any, deck: [...]}, integer) ::
+          {:ok, Games.t()} | {:error, Games.t()}
   def move_from_deck(
         %{deck: deck, cols: cols} = game,
         column
@@ -169,14 +170,15 @@ defmodule Solitaire.Game.Klondike do
       if can_move?(upper_card, current) do
         cards = [current | cards]
 
-        game
-        |> Games.update_cols(column, %{col | cards: cards})
-        |> Map.put(:deck, deck)
+        {:ok,
+         game
+         |> Games.update_cols(column, %{col | cards: cards})
+         |> Map.put(:deck, deck)}
       else
-        game
+        {:error, game}
       end
     else
-      game
+      {:error, game}
     end
   end
 

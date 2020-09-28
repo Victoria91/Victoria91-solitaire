@@ -40,7 +40,7 @@ defmodule SolitaireWeb.GameChannel do
   end
 
   def handle_in(
-        "move_to_column",
+        "move_from_column",
         %{
           "from_card_index" => card_index,
           "from_column" => from_column,
@@ -60,5 +60,19 @@ defmodule SolitaireWeb.GameChannel do
   def handle_in("change", _params, %{assigns: %{token: token}} = socket) do
     new_state = GameServer.change(token)
     {:reply, {:ok, fetch_game_state(new_state)}, socket}
+  end
+
+  def handle_in(
+        "move_from_deck",
+        %{"to_column" => to_column},
+        %{assigns: %{token: token}} = socket
+      ) do
+    case GameServer.move_from_deck(token, to_column) do
+      {:ok, new_state} ->
+        {:reply, {:ok, fetch_game_state(new_state)}, socket}
+
+      {:error, _} ->
+        {:reply, :error, socket}
+    end
   end
 end
