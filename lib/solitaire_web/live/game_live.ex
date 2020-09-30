@@ -66,10 +66,14 @@ defmodule SolitaireWeb.GameLive do
   end
 
   def handle_event("move_from_deck", _params, %{assigns: %{token: token}} = socket) do
-    state = GameServer.move_from_deck(token, [])
-    broadcast_game_state(token, state)
+    case GameServer.move_from_deck(token, []) do
+      {:ok, new_state} ->
+        broadcast_game_state(token, new_state)
+        {:noreply, assign_game_state(socket, new_state, token)}
 
-    {:noreply, assign_game_state(socket, state, token)}
+      {:error, _} ->
+        {:noreply, socket}
+    end
   end
 
   def handle_event("put", _params, %{assigns: %{move_from_deck: true, token: token}} = socket) do
@@ -126,11 +130,15 @@ defmodule SolitaireWeb.GameLive do
         %{"column" => column},
         %{assigns: %{token: token, move_from_deck: true}} = socket
       ) do
-    state = GameServer.move_from_deck(token, column)
-    new_socket = assign(assign_game_state(socket, state, token), :move_from_deck, false)
-    broadcast_game_state(token, state)
+    case GameServer.move_from_deck(token, column) do
+      {:ok, new_state} ->
+        new_socket = assign(assign_game_state(socket, new_state, token), :move_from_deck, false)
+        broadcast_game_state(token, new_state)
+        {:noreply, new_socket}
 
-    {:noreply, new_socket}
+      {:error, _} ->
+        {:noreply, assign(socket, :move_from_deck, false)}
+    end
   end
 
   @doc """

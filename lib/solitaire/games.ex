@@ -10,7 +10,7 @@ defmodule Solitaire.Games do
   @callback load_game(keyword) :: Games.t()
   @callback can_move?(tuple, list(tuple)) :: boolean
   @callback move_to_foundation(Games.t(), integer) :: Games.t()
-  @callback move_from_deck(Games.t(), any) :: Games.t()
+  @callback move_from_deck(Games.t(), any) :: {:ok, Games.t()} | {:error, Games.t()}
   @callback move_from_column(Games.t(), {integer, integer}, integer) ::
               {:ok, Games.t()} | {:error, Games.t()}
 

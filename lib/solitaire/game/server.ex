@@ -130,13 +130,16 @@ defmodule Solitaire.Game.Server do
         _from,
         state
       ) do
-    result = module(state).move_from_deck(state, column)
+    case module(state).move_from_deck(state, column) do
+      {:ok, result} ->
+        new_state = update_game_state(state, result)
 
-    new_state = update_game_state(state, result)
+        perform_automove_to_foundation(new_state)
+        {:reply, {:ok, new_state}, new_state}
 
-    perform_automove_to_foundation(new_state)
-
-    {:reply, new_state, new_state}
+      {:error, _result} ->
+        {:reply, {:error, state}, state}
+    end
   end
 
   def handle_call({:move_from_column, from, to}, _from, state) do
@@ -153,8 +156,7 @@ defmodule Solitaire.Game.Server do
   end
 
   defp put_deck_length(%{deck: deck} = state) do
-    deck_length = Enum.find_index(deck, &(&1 == []))
-    %{state | deck_length: deck_length}
+    %{state | deck_length: length(deck)}
   end
 
   defp update_game_state(state, result) do

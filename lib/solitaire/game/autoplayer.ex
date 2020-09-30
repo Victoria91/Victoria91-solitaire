@@ -15,6 +15,8 @@ defmodule Solitaire.Game.Autoplayer do
     if async, do: Task.async(fun), else: fun.()
   end
 
+  def play(game, pid, count \\ 50)
+
   @spec play(Solitaire.Games.t(), any, non_neg_integer()) :: Solitaire.Games.t()
   @doc "Автобой"
   def play(
@@ -28,7 +30,7 @@ defmodule Solitaire.Game.Autoplayer do
 
   def play(game, _pid, 0), do: game
 
-  def play(%{cols: cols}, pid, count \\ 50) do
+  def play(%{cols: cols}, pid, count) do
     GameServer.move_to_foundation(pid, :deck)
 
     cols
