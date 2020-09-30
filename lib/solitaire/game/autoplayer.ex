@@ -75,9 +75,13 @@ defmodule Solitaire.Game.Autoplayer do
       %{foundation: new_foundation} =
       cols
       |> Enum.with_index()
-      |> Enum.reduce(game, fn {_col, index}, _game ->
+      |> Enum.reduce(game, fn {_col, index}, old_game ->
         game = GameServer.move_to_foundation(pid, index)
-        broadcast_to_game_topic(pid, game)
+
+        if old_game != game do
+          broadcast_to_game_topic(pid, game)
+        end
+
         :timer.sleep(40)
         game
       end)
