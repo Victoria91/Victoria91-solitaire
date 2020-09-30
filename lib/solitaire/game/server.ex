@@ -121,7 +121,7 @@ defmodule Solitaire.Game.Server do
     result = Map.put(state, :deck, module(state).change(state))
     new_state = state |> update_game_state(result) |> put_deck_length
 
-    perform_automove_to_foundation(state)
+    perform_automove_to_foundation(new_state)
     {:reply, new_state, new_state}
   end
 
