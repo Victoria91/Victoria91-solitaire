@@ -52,8 +52,8 @@ defmodule SolitaireWeb.GameChannel do
       {:ok, new_state} ->
         {:reply, {:ok, fetch_game_state(new_state)}, socket}
 
-      {:error, _} ->
-        {:reply, :error, socket}
+      {:error, old_state} ->
+        {:reply, {:error, fetch_game_state(old_state)}, socket}
     end
   end
 
