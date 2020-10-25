@@ -21,6 +21,7 @@ defmodule SolitaireWeb.Router do
 
     # get "/", PageController, :index
     live "/", GameLive
+    get "/can_move", PageController, :can_move
   end
 
   # Other scopes may use custom stacks.
