@@ -236,8 +236,11 @@ defmodule SolitaireWeb.GameLive do
   defp assign_blank_fnd_cols_count(socket, %{foundation: foundation, type: :spider}) do
     played_count =
       Enum.reduce(foundation, 0, fn
-        {_suit, count}, acc when not is_nil(count) -> count + acc
-        _val, acc -> acc
+        {_suit, %{count: count}}, acc when not is_nil(count) ->
+          count + acc
+
+        _val, acc ->
+          acc
       end)
 
     assign(socket, :unplayed_fnd_cols_count, 8 - played_count)

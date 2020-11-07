@@ -68,26 +68,32 @@ defmodule Solitaire.Game.Autoplayer do
       do: game
 
   def perform_automove_to_foundation(%{cols: cols, foundation: foundation} = game, pid) do
-    :timer.sleep(200)
-    GameServer.move_to_foundation(pid, :deck)
+    sleep_unless_test(200)
+    GameServer.move_to_foundation(pid, :deck, auto: true)
 
     new_game =
       %{foundation: new_foundation} =
       cols
       |> Enum.with_index()
       |> Enum.reduce(game, fn {_col, index}, old_game ->
-        game = GameServer.move_to_foundation(pid, index)
+        game = GameServer.move_to_foundation(pid, index, auto: true)
 
         if old_game != game do
           broadcast_to_game_topic(pid, game)
         end
 
-        :timer.sleep(40)
+        sleep_unless_test(40)
         game
       end)
 
     if new_foundation != foundation do
       perform_automove_to_foundation(new_game, pid)
+    end
+  end
+
+  defp sleep_unless_test(timeout) do
+    if Mix.env() != :test do
+      :timer.sleep(timeout)
     end
   end
 

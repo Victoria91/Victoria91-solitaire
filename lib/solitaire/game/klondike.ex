@@ -19,18 +19,21 @@ defmodule Solitaire.Game.Klondike do
   end
 
   @impl Games
-  def move_to_foundation(%{deck: deck, foundation: foundation} = game, :deck) do
+  def move_to_foundation(%{deck: deck, foundation: foundation} = game, :deck, opts \\ []) do
+    auto = Keyword.get(opts, :auto, false)
+
     if current = current(deck) do
       {from_suit, from_rank} = current
-      foundation_card = Map.fetch!(foundation, from_suit)
+      foundation_rank = Foundation.fetch_rank_from_foundation(foundation, from_suit)
 
       cond do
-        foundation_card == nil && from_rank == List.first(Games.ranks()) ->
-          move_from_deck_to_foundation(game, from_suit)
+        foundation_rank == nil && from_rank == List.first(Games.ranks()) ->
+          move_from_deck_to_foundation(game, from_suit, ["deck"])
 
         Games.rank_index(from_rank) - 1 ==
-            Games.rank_index(foundation_card) ->
-          move_from_deck_to_foundation(game, from_suit)
+          Games.rank_index(foundation_rank) &&
+            Foundation.can_automove?(foundation, foundation_rank, from_suit, auto) ->
+          move_from_deck_to_foundation(game, from_suit, ["deck"])
 
         true ->
           game
@@ -41,32 +44,37 @@ defmodule Solitaire.Game.Klondike do
   end
 
   @impl Games
-  def move_to_foundation(%{cols: cols, foundation: foundation} = game, from_col_num) do
+  def move_to_foundation(%{cols: cols, foundation: foundation} = game, from_col_num, opts) do
+    auto = Keyword.get(opts, :auto, false)
+
     %{cards: cards} = Enum.at(cols, from_col_num)
 
     card = List.first(cards)
 
     if card do
       {from_suit, from_rank} = card
-      foundation_card = Map.fetch!(foundation, from_suit)
+      foundation_rank = Foundation.fetch_rank_from_foundation(foundation, from_suit)
 
       cond do
-        foundation_card == nil && from_rank == List.first(Games.ranks()) ->
+        foundation_rank == nil && from_rank == List.first(Games.ranks()) ->
           Games.move_from_column_to_foundation(
             game,
             from_suit,
             from_col_num,
             1,
+            ["column", from_col_num],
             Foundation
           )
 
         Games.rank_index(from_rank) - 1 ==
-            Games.rank_index(foundation_card) ->
+          Games.rank_index(foundation_rank) &&
+            Foundation.can_automove?(foundation, foundation_rank, from_suit, auto) ->
           Games.move_from_column_to_foundation(
             game,
             from_suit,
             from_col_num,
             1,
+            ["column", from_col_num],
             Foundation
           )
 
@@ -78,9 +86,9 @@ defmodule Solitaire.Game.Klondike do
     end
   end
 
-  defp move_from_deck_to_foundation(%{foundation: foundation, deck: deck} = game, suit) do
+  defp move_from_deck_to_foundation(%{foundation: foundation, deck: deck} = game, suit, from) do
     game
-    |> Map.put(:foundation, Foundation.push(foundation, suit))
+    |> Map.put(:foundation, Foundation.push(foundation, suit, from))
     |> Map.put(:deck, deck |> rest_deck |> split_deck_if_reached_the_end())
   end
 
@@ -116,11 +124,17 @@ defmodule Solitaire.Game.Klondike do
   def move_from_foundation(game, suit, to_col_num) when is_binary(suit),
     do: move_from_foundation(game, String.to_existing_atom(suit), to_col_num)
 
-  def move_from_foundation(%{cols: cols, foundation: foundation} = game, suit, to_col_num) do
-    from_rank = Map.fetch!(foundation, suit)
+  def move_from_foundation(
+        %{cols: cols, foundation: foundation} = game,
+        suit,
+        to_col_num
+      ) do
+    from_rank =
+      Foundation.fetch_rank_from_foundation(foundation, suit) |> IO.inspect(label: "RANK")
+
     to_column = %{cards: [to | _] = cards} = Enum.at(cols, to_col_num)
 
-    if can_move?(to, {suit, from_rank}) do
+    if from_rank && can_move?(to, {suit, from_rank}) |> IO.inspect(label: "CAN MOVE") do
       game
       |> Map.put(:foundation, Foundation.pop(foundation, suit))
       |> Games.update_cols(to_col_num, %{to_column | cards: [{suit, from_rank} | cards]})

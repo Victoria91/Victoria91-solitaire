@@ -1,7 +1,7 @@
 defmodule Solitaire.Game.SpiderTest do
   alias Solitaire.Game.Spider
 
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   setup do
     game = Spider.load_game(2)
@@ -32,8 +32,8 @@ defmodule Solitaire.Game.SpiderTest do
 
       game = %{game | cols: new_cols}
 
-      %{foundation: foundation, cols: cols} = Spider.move_to_foundation(game, 0)
-      assert %{:spade => 1} = foundation
+      %{foundation: foundation, cols: cols} = Spider.move_to_foundation(game, 0, [])
+      assert %{spade: %{count: 1, from: ["column", 0]}} = foundation
       assert Enum.at(cols, 0) == %{cards: [], unplayed: 0}
     end
 
@@ -60,8 +60,8 @@ defmodule Solitaire.Game.SpiderTest do
 
       game = %{game | cols: new_cols}
 
-      %{foundation: foundation, cols: cols} = Spider.move_to_foundation(game, 0)
-      assert %{:spade => nil} = foundation
+      %{foundation: foundation, cols: cols} = Spider.move_to_foundation(game, 0, [])
+      assert %{spade: %{from: nil, prev: nil, rank: nil}} = foundation
       assert cols == new_cols
     end
   end

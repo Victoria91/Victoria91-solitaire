@@ -2,20 +2,30 @@ defmodule Solitaire.Games do
   defstruct cols: [],
             deck: [],
             deck_length: 8,
-            foundation: %{spade: nil, diamond: nil, heart: nil, club: nil}
+            from: nil,
+            foundation: %{
+              spade: %{rank: nil, from: nil, prev: nil, count: 0},
+              diamond: %{rank: nil, from: nil, prev: nil, count: 0},
+              heart: %{rank: nil, from: nil, prev: nil, count: 0},
+              club: %{rank: nil, from: nil, prev: nil, count: 0}
+            }
 
   @ranks [:A, 2, 3, 4, 5, 6, 7, 8, 9, 10, :J, :D, :K]
   @suits ~w(spade heart diamond club)a
 
   @callback load_game(keyword) :: Games.t()
   @callback can_move?(tuple, list(tuple)) :: boolean
-  @callback move_to_foundation(Games.t(), integer) :: Games.t()
   @callback move_from_deck(Games.t(), any) :: {:ok, Games.t()} | {:error, Games.t()}
+  @callback move_to_foundation(Games.t(), integer, keyword) :: Games.t()
+
   @callback move_from_column(Games.t(), {integer, integer}, integer) ::
               {:ok, Games.t()} | {:error, Games.t()}
 
   def ranks, do: @ranks
   def suits, do: @suits
+
+  def black_suits, do: ~w(spade club)a
+  def red_suits, do: ~w(diamond heart)a
 
   @doc """
     Возвращает tuple, первый элемент которого - полученные `count` карт из колоды,
@@ -107,13 +117,14 @@ defmodule Solitaire.Games do
         suit,
         from_col_num,
         cards_count,
+        from,
         module
       ) do
     {new_from_column, _moved_cards} =
       take_cards_from_column(Enum.at(cols, from_col_num), cards_count)
 
     game
-    |> Map.put(:foundation, module.push(foundation, suit))
+    |> Map.put(:foundation, module.push(foundation, suit, from))
     |> update_cols(from_col_num, new_from_column)
   end
 
