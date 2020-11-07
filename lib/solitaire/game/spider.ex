@@ -37,9 +37,9 @@ defmodule Solitaire.Game.Spider do
   defp ranks_length, do: length(Games.ranks())
 
   @impl Games
-  def move_to_foundation(game, :deck), do: game
+  def move_to_foundation(game, :deck, _opts), do: game
 
-  def move_to_foundation(%{cols: cols} = game, col_num) do
+  def move_to_foundation(%{cols: cols} = game, col_num, _opts) do
     %{cards: [from | _] = cards} = Enum.at(cols, col_num)
     cards_to_move = Enum.take(cards, ranks_length())
 
@@ -50,6 +50,7 @@ defmodule Solitaire.Game.Spider do
         Games.suit(from),
         col_num,
         ranks_length(),
+        ["column", col_num],
         Solitaire.Game.Spider.Foundation
       )
     else

@@ -8,8 +8,8 @@
     <% end) %>
 <% else %>
     <%= Map.keys(@foundation) |> Enum.map(fn suit -> %>
-        <%= if @foundation[suit] do %>
-            <%= Enum.map(1 .. @foundation[suit] |> IO.inspect(label: "range"), fn _ -> %>
+        <%= if @foundation[suit][:count] != 0 do %>
+            <%= Enum.map(1 .. @foundation[suit][:count] |> IO.inspect(label: "range"), fn _ -> %>
                 <li class="<%= "#{to_string(suit)}<>s" %> pile <%= @type %>" data-pile=<%= "#{to_string(suit)}<>s" %> data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;" phx-click="put" phx-value-suit=<%= suit %> >
                     <ul>
                     <%= render("spider_fnd.html", foundation: @foundation[suit], suit: suit, pop: @pop) %>

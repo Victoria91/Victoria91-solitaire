@@ -40,13 +40,19 @@ defmodule Solitaire.Game.Server do
   end
 
   @spec init(any) :: {:ok, Games.t(), {:continue, :give_cards}}
+  def init(%{game_state: game_state} = state) do
+    {:ok, update_game_state(state, game_state), {:continue, :automove}}
+  end
+
   def init(state) do
+    state |> IO.inspect()
+
     {:ok, state, {:continue, :give_cards}}
   end
 
-  def move_to_foundation(token, attr) do
+  def move_to_foundation(token, attr, opts \\ []) do
     measure("move_to_foundation", fn ->
-      GenServer.call(name(token), {:move_to_foundation, attr})
+      GenServer.call(name(token), {:move_to_foundation, attr, opts})
     end)
   end
 
@@ -90,6 +96,15 @@ defmodule Solitaire.Game.Server do
     end)
   end
 
+  def handle_continue(:automove, state) do
+    measure("automove", fn ->
+      new_state = put_deck_length(state)
+
+      perform_automove_to_foundation(new_state)
+      {:noreply, new_state}
+    end)
+  end
+
   def handle_call(:state, _from, state) do
     {:reply, state, state}
   end
@@ -109,8 +124,8 @@ defmodule Solitaire.Game.Server do
     {:reply, state, state}
   end
 
-  def handle_call({:move_to_foundation, attr}, _from, state) do
-    result = module(state).move_to_foundation(state, attr)
+  def handle_call({:move_to_foundation, attr, opts}, _from, state) do
+    result = module(state).move_to_foundation(state, attr, opts)
 
     new_state = update_game_state(state, result)
 

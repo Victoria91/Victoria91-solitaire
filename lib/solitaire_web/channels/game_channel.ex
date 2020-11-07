@@ -21,15 +21,42 @@ defmodule SolitaireWeb.GameChannel do
     {:noreply, socket}
   end
 
-  def fetch_game_state(%{cols: cols, deck: deck, deck_length: deck_length}) do
+  def fetch_game_state(%{
+        foundation: foundation,
+        cols: cols,
+        deck: deck,
+        deck_length: deck_length
+      }) do
     %{
       columns:
         Enum.map(cols, fn %{cards: cards} = map ->
           %{map | cards: convert_keyword_to_list(cards)}
         end),
       deck_length: deck_length,
+      foundation: foundation |> convert_to_string(),
       deck: deck |> Enum.map(&convert_keyword_to_list/1) |> List.first()
     }
+  end
+
+  defp convert_to_string(map) do
+    map
+    |> Map.new(fn
+      {k, %{rank: rank, prev: prev} = foundation} ->
+        {k,
+         foundation
+         |> Map.put(:rank, convert_rank_to_string(rank))
+         |> Map.put(:prev, convert_rank_to_string(prev))}
+    end)
+  end
+
+  defp convert_rank_to_string(nil), do: nil
+
+  defp convert_rank_to_string(rank) when is_atom(rank) do
+    Atom.to_string(rank)
+  end
+
+  defp convert_rank_to_string(rank) when is_integer(rank) do
+    Integer.to_string(rank)
   end
 
   defp convert_keyword_to_list(kw) do

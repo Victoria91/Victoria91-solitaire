@@ -3,7 +3,7 @@ defmodule Solitaire.Game.ServerTest do
 
   # alias Solitaire.Game.MnesiaPersister
 
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true
 
   setup do
     {:ok,
@@ -22,10 +22,234 @@ defmodule Solitaire.Game.ServerTest do
       assert state == Map.drop(GameServer.state(token), [:token, :type])
     end
 
-    test "if no state in mnesia - loads new game", %{token: token} do
-      {:ok, _pid} = GameServer.start_link(%{token: token})
+    test "when A and 2 available for foundation - puts them to foundation", %{token: token} do
+      {:ok, _pid} =
+        GameServer.start_link(%{
+          game_state: %{
+            cols: [
+              %{cards: [{:spade, :A}], unplayed: 0},
+              %{cards: [{:spade, 2}], unplayed: 0},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []}
+            ],
+            deck: [[]],
+            deck_length: 1,
+            foundation: %{
+              spade: %{rank: nil, from: nil, prev: nil},
+              diamond: %{rank: nil, from: nil, prev: nil},
+              heart: %{rank: nil, from: nil, prev: nil},
+              club: %{rank: nil, from: nil, prev: nil}
+            }
+          },
+          type: :klondike,
+          token: token
+        })
+
+      :timer.sleep(10)
       state = GameServer.state(token)
       assert state.cols != []
+
+      assert state.foundation == %{
+               club: %{from: nil, prev: nil, rank: nil},
+               diamond: %{from: nil, prev: nil, rank: nil},
+               heart: %{from: nil, prev: nil, rank: nil},
+               spade: %{from: ["column", 1], prev: :A, rank: 2}
+             }
+    end
+
+    test "when A and 3 available for foundation and other suits less then 2 - does not pefrom push to foundation",
+         %{token: token} do
+      {:ok, _pid} =
+        GameServer.start_link(%{
+          game_state: %{
+            cols: [
+              %{cards: [{:spade, 3}], unplayed: 0},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []}
+            ],
+            deck: [[]],
+            deck_length: 1,
+            foundation: %{
+              spade: %{rank: 2, from: nil, prev: nil},
+              diamond: %{rank: nil, from: nil, prev: nil},
+              heart: %{rank: nil, from: nil, prev: nil},
+              club: %{rank: nil, from: nil, prev: nil}
+            }
+          },
+          type: :klondike,
+          token: token
+        })
+
+      state = GameServer.state(token)
+      assert state.cols != []
+
+      assert state.foundation == %{
+               club: %{from: nil, prev: nil, rank: nil},
+               diamond: %{from: nil, prev: nil, rank: nil},
+               heart: %{from: nil, prev: nil, rank: nil},
+               spade: %{from: nil, rank: 2, prev: nil}
+             }
+    end
+
+    test "when A and 3 available for foundation and all other color suits not less then 2 - pefrom push to foundation",
+         %{token: token} do
+      {:ok, _pid} =
+        GameServer.start_link(%{
+          game_state: %{
+            cols: [
+              %{cards: [{:spade, 3}], unplayed: 0},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []}
+            ],
+            deck: [[]],
+            deck_length: 1,
+            foundation: %{
+              spade: %{from: ["column", 0], rank: 2},
+              diamond: %{rank: 2, from: nil, prev: nil},
+              heart: %{rank: 2, from: nil, prev: nil},
+              club: %{rank: nil, from: nil, prev: nil}
+            }
+          },
+          type: :klondike,
+          token: token
+        })
+
+      :timer.sleep(10)
+      state = GameServer.state(token)
+      assert state.cols != []
+
+      assert state.foundation == %{
+               club: %{from: nil, prev: nil, rank: nil},
+               diamond: %{from: nil, prev: nil, rank: 2},
+               heart: %{from: nil, prev: nil, rank: 2},
+               spade: %{from: ["column", 0], rank: 3, prev: 2}
+             }
+    end
+
+    test "when 3 available for foundation and all other color suits not less then 2 - pefrom push to foundation",
+         %{token: token} do
+      {:ok, _pid} =
+        GameServer.start_link(%{
+          game_state: %{
+            cols: [
+              %{cards: [{:spade, 3}], unplayed: 0},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []}
+            ],
+            deck: [[]],
+            deck_length: 1,
+            foundation: %{
+              spade: %{from: ["column", 0], rank: 2},
+              diamond: %{rank: :A, from: nil, prev: nil},
+              heart: %{rank: 2, from: nil, prev: nil},
+              club: %{rank: nil, from: nil, prev: nil}
+            }
+          },
+          type: :klondike,
+          token: token
+        })
+
+      state = GameServer.state(token)
+      assert state.cols != []
+
+      assert state.foundation == %{
+               club: %{from: nil, prev: nil, rank: nil},
+               diamond: %{rank: :A, from: nil, prev: nil},
+               heart: %{from: nil, prev: nil, rank: 2},
+               spade: %{from: ["column", 0], rank: 2}
+             }
+    end
+
+    test "when one card available and other not - does not pefrom push to foundation",
+         %{token: token} do
+      {:ok, _pid} =
+        GameServer.start_link(%{
+          game_state: %{
+            cols: [
+              %{cards: [{:spade, 3}], unplayed: 0},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []}
+            ],
+            deck: [[]],
+            deck_length: 1,
+            foundation: %{
+              spade: %{from: ["column", 0], rank: 2},
+              diamond: %{rank: 2, from: nil, prev: nil},
+              heart: %{rank: nil, from: nil, prev: nil},
+              club: %{rank: nil, from: nil, prev: nil}
+            }
+          },
+          type: :klondike,
+          token: token
+        })
+
+      state = GameServer.state(token)
+      assert state.cols != []
+
+      assert state.foundation == %{
+               club: %{from: nil, prev: nil, rank: nil},
+               diamond: %{from: nil, prev: nil, rank: 2},
+               heart: %{from: nil, prev: nil, rank: nil},
+               spade: %{from: ["column", 0], rank: 2}
+             }
+    end
+
+    test "when A and 3 available for foundation from deck and all other color suits not less then 2 - pefrom push to foundation",
+         %{token: token} do
+      {:ok, _pid} =
+        GameServer.start_link(%{
+          game_state: %{
+            cols: [
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []}
+            ],
+            deck: [[{:diamond, 3}], []],
+            deck_length: 1,
+            foundation: %{
+              diamond: %{from: ["column", 0], rank: 2},
+              spade: %{rank: 2, from: nil, prev: nil},
+              club: %{rank: 2, from: nil, prev: nil},
+              heart: %{rank: nil, from: nil, prev: nil}
+            }
+          },
+          type: :klondike,
+          token: token
+        })
+
+      :timer.sleep(10)
+      state = GameServer.state(token)
+      assert state.cols != []
+
+      assert state.foundation == %{
+               club: %{from: nil, prev: nil, rank: 2},
+               diamond: %{from: ["deck"], prev: 2, rank: 3},
+               heart: %{from: nil, prev: nil, rank: nil},
+               spade: %{from: nil, prev: nil, rank: 2}
+             }
     end
   end
 

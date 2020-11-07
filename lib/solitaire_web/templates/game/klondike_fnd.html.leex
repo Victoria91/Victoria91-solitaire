@@ -1,19 +1,19 @@
-<%= if @foundation do %>
-    <li class="card up" data-rank=<%= @foundation %> data-suit=<%= @suit %>  data-pile=<%= to_string(@suit)<>"s" %> data-selected=<%= @pop == to_string(@suit) %> data-played="true">
+<%= if @foundation[:rank] do %>
+    <li class="card up" data-rank=<%= @foundation[:rank] %> data-suit=<%= @suit %>  data-pile=<%= to_string(@suit)<>"s" %> data-selected=<%= @pop == to_string(@suit) %> data-played="true">
         <div class="ace <%= @suit %>">
         <div class="corner top">
-        <span class="rank"><%= @foundation %></span>
+        <span class="rank"><%= @foundation[:rank] %></span>
         <span class="suit"></span>
         </div>
         <span class="suit middle_center"></span>
         <div class="corner bottom">
-        <span class="rank"><%= @foundation %></span>
+        <span class="rank"><%= @foundation[:rank] %></span>
         <span class="suit"></span>
         </div>
         </div>
     </li>
-    <%= if @foundation != List.first(ranks()) do %>
-        <%= Enum.map(1 .. Enum.find_index(ranks(), & &1 == @foundation), fn _ -> %>
+    <%= if @foundation[:rank] != List.first(ranks()) do %>
+        <%= Enum.map(1 .. Enum.find_index(ranks(), & &1 == @foundation[:rank]), fn _ -> %>
             <li class="card"></li>
         <% end) %>
     <% end %>

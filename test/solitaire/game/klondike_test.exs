@@ -1,7 +1,7 @@
 defmodule Solitaire.Game.KlondikeTest do
   alias Solitaire.Game.Klondike
 
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   setup do
     game = Klondike.load_game(3)
@@ -169,14 +169,16 @@ defmodule Solitaire.Game.KlondikeTest do
 
       Klondike.move_to_foundation(game, :deck)
 
-      assert %{deck: [[]], foundation: %{spade: :A}} ==
-               Klondike.move_to_foundation(game, :deck)
+      assert %{
+               deck: [[]],
+               foundation: %{spade: %{rank: :A, from: ["deck"], prev: nil}}
+             } = Klondike.move_to_foundation(game, :deck)
     end
 
     test "with non-empty foundation - next rank is available" do
-      game = %{deck: [[{:spade, 2}], []], foundation: %{spade: :A}}
+      game = %{deck: [[{:spade, 2}], []], foundation: %{spade: %{rank: :A}}}
 
-      assert %{deck: [[]], foundation: %{spade: 2}} ==
+      assert %{deck: [[]], foundation: %{spade: %{from: ["deck"], prev: :A, rank: 2}}} ==
                Klondike.move_to_foundation(game, :deck)
     end
 
@@ -187,12 +189,12 @@ defmodule Solitaire.Game.KlondikeTest do
           [],
           [heart: 3, club: 5, heart: 10]
         ],
-        foundation: %{heart: :A}
+        foundation: %{heart: %{rank: :A}}
       }
 
       %{
         deck: deck,
-        foundation: %{heart: 2}
+        foundation: %{heart: %{rank: 2}}
       } = Klondike.move_to_foundation(game, :deck)
 
       deck_lengths = Enum.map(deck, &length/1)
@@ -206,14 +208,20 @@ defmodule Solitaire.Game.KlondikeTest do
 
       Klondike.move_to_foundation(game, 0)
 
-      assert %{cols: [%{cards: [], unplayed: 0}], foundation: %{spade: :A}} ==
+      assert %{
+               cols: [%{cards: [], unplayed: 0}],
+               foundation: %{spade: %{from: ["column", 0], prev: nil, rank: :A}}
+             } ==
                Klondike.move_to_foundation(game, 0)
     end
 
     test "with non-empty foundation - next rank is available" do
-      game = %{cols: [%{cards: [{:spade, 2}], unplayed: 0}], foundation: %{spade: :A}}
+      game = %{cols: [%{cards: [{:spade, 2}], unplayed: 0}], foundation: %{spade: %{rank: :A}}}
 
-      assert %{cols: [%{cards: [], unplayed: 0}], foundation: %{spade: 2}} ==
+      assert %{
+               cols: [%{cards: [], unplayed: 0}],
+               foundation: %{spade: %{from: ["column", 0], prev: :A, rank: 2}}
+             } ==
                Klondike.move_to_foundation(game, 0)
     end
 
@@ -221,12 +229,12 @@ defmodule Solitaire.Game.KlondikeTest do
     test "unplayed handling" do
       game = %{
         cols: [%{cards: [{:spade, 2}, {:heart, 3}, {:spade, 4}], unplayed: 1}],
-        foundation: %{spade: :A}
+        foundation: %{spade: %{rank: :A}}
       }
 
       assert %{
                cols: [%{cards: [{:heart, 3}, {:spade, 4}], unplayed: 1}],
-               foundation: %{spade: 2}
+               foundation: %{spade: %{from: ["column", 0], prev: :A, rank: 2}}
              } ==
                Klondike.move_to_foundation(game, 0)
     end
