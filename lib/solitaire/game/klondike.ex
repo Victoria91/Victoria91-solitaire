@@ -129,12 +129,11 @@ defmodule Solitaire.Game.Klondike do
         suit,
         to_col_num
       ) do
-    from_rank =
-      Foundation.fetch_rank_from_foundation(foundation, suit) |> IO.inspect(label: "RANK")
+    from_rank = Foundation.fetch_rank_from_foundation(foundation, suit)
 
     to_column = %{cards: [to | _] = cards} = Enum.at(cols, to_col_num)
 
-    if from_rank && can_move?(to, {suit, from_rank}) |> IO.inspect(label: "CAN MOVE") do
+    if from_rank && can_move?(to, {suit, from_rank}) do
       game
       |> Map.put(:foundation, Foundation.pop(foundation, suit))
       |> Games.update_cols(to_col_num, %{to_column | cards: [{suit, from_rank} | cards]})

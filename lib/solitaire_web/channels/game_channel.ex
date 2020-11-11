@@ -84,6 +84,26 @@ defmodule SolitaireWeb.GameChannel do
     end
   end
 
+  def handle_in(
+        "move_to_foundation_from_column",
+        %{
+          "from_column" => from_column
+        },
+        %{assigns: %{token: token}} = socket
+      ) do
+    new_state = GameServer.move_to_foundation(token, from_column)
+    {:reply, {:ok, fetch_game_state(new_state)}, socket}
+  end
+
+  def handle_in(
+        "move_to_foundation_from_deck",
+        _payload,
+        %{assigns: %{token: token}} = socket
+      ) do
+    new_state = GameServer.move_to_foundation(token, :deck)
+    {:reply, {:ok, fetch_game_state(new_state)}, socket}
+  end
+
   def handle_in("change", _params, %{assigns: %{token: token}} = socket) do
     new_state = GameServer.change(token)
     {:reply, {:ok, fetch_game_state(new_state)}, socket}

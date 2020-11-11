@@ -45,8 +45,6 @@ defmodule Solitaire.Game.Server do
   end
 
   def init(state) do
-    state |> IO.inspect()
-
     {:ok, state, {:continue, :give_cards}}
   end
 
