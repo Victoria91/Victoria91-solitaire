@@ -8,7 +8,7 @@ defmodule Solitaire.Game.Klondike.Foundation do
   def push(foundation, suit, from) do
     case get_in(foundation, [suit, :rank]) do
       nil -> Map.put(foundation, suit, %{rank: List.first(@ranks), from: from, prev: nil})
-      rank -> foundation |> Map.put(suit, %{rank: next_rank(rank), from: from, prev: rank})
+      rank -> Map.put(foundation, suit, %{rank: next_rank(rank), from: from, prev: rank})
     end
   end
 

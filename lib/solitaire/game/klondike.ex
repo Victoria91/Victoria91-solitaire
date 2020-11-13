@@ -20,23 +20,24 @@ defmodule Solitaire.Game.Klondike do
 
   @impl Games
   def move_to_foundation(%{deck: deck, foundation: foundation} = game, :deck, opts \\ []) do
-    auto = Keyword.get(opts, :auto, false)
+    # auto = Keyword.get(opts, :auto, false)
 
     if current = current(deck) do
       {from_suit, from_rank} = current
       foundation_rank = Foundation.fetch_rank_from_foundation(foundation, from_suit)
 
-      cond do
-        foundation_rank == nil && from_rank == List.first(Games.ranks()) ->
-          move_from_deck_to_foundation(game, from_suit, ["deck"])
-
-        Games.rank_index(from_rank) - 1 ==
-          Games.rank_index(foundation_rank) &&
-            Foundation.can_automove?(foundation, foundation_rank, from_suit, auto) ->
-          move_from_deck_to_foundation(game, from_suit, ["deck"])
-
-        true ->
-          game
+      if (foundation_rank == nil && from_rank == List.first(Games.ranks())) ||
+           (Games.rank_index(from_rank) - 1 ==
+              Games.rank_index(foundation_rank) &&
+              Foundation.can_automove?(
+                foundation,
+                foundation_rank,
+                from_suit,
+                Keyword.get(opts, :auto, false)
+              )) do
+        move_from_deck_to_foundation(game, from_suit, ["deck"])
+      else
+        game
       end
     else
       game
@@ -49,37 +50,24 @@ defmodule Solitaire.Game.Klondike do
 
     %{cards: cards} = Enum.at(cols, from_col_num)
 
-    card = List.first(cards)
-
-    if card do
+    if card = List.first(cards) do
       {from_suit, from_rank} = card
       foundation_rank = Foundation.fetch_rank_from_foundation(foundation, from_suit)
 
-      cond do
-        foundation_rank == nil && from_rank == List.first(Games.ranks()) ->
-          Games.move_from_column_to_foundation(
-            game,
-            from_suit,
-            from_col_num,
-            1,
-            ["column", from_col_num],
-            Foundation
-          )
-
-        Games.rank_index(from_rank) - 1 ==
-          Games.rank_index(foundation_rank) &&
-            Foundation.can_automove?(foundation, foundation_rank, from_suit, auto) ->
-          Games.move_from_column_to_foundation(
-            game,
-            from_suit,
-            from_col_num,
-            1,
-            ["column", from_col_num],
-            Foundation
-          )
-
-        true ->
-          game
+      if (foundation_rank == nil && from_rank == List.first(Games.ranks())) ||
+           (Games.rank_index(from_rank) - 1 ==
+              Games.rank_index(foundation_rank) &&
+              Foundation.can_automove?(foundation, foundation_rank, from_suit, auto)) do
+        Games.move_from_column_to_foundation(
+          game,
+          from_suit,
+          from_col_num,
+          1,
+          ["column", from_col_num],
+          Foundation
+        )
+      else
+        game
       end
     else
       game
