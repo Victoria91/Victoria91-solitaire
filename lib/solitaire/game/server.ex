@@ -2,6 +2,7 @@ defmodule Solitaire.Game.Server do
   use GenServer
 
   alias Solitaire.Statix
+  alias Solitaire.Game.Autoplayer
 
   require Logger
 
@@ -45,8 +46,6 @@ defmodule Solitaire.Game.Server do
   end
 
   def init(state) do
-    state |> IO.inspect()
-
     {:ok, state, {:continue, :give_cards}}
   end
 
@@ -184,7 +183,7 @@ defmodule Solitaire.Game.Server do
 
   def perform_automove_to_foundation(%{type: :klondike, token: token} = game) do
     Task.async(fn ->
-      Solitaire.Game.Autoplayer.perform_automove_to_foundation(game, token)
+      Autoplayer.perform_automove_to_foundation(game, token)
     end)
   end
 

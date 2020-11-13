@@ -2,11 +2,12 @@ defmodule SolitaireWeb.GameChannel do
   use SolitaireWeb, :channel
 
   alias Solitaire.Game.Server, as: GameServer
+  alias Solitaire.Game.Supervisor, as: GameSupervisor
 
   def join(_topic, _params, socket) do
     token = 16 |> :crypto.strong_rand_bytes() |> Base.url_encode64()
 
-    GameServer.start_link(%{token: token, type: :klondike})
+    GameSupervisor.start_game(%{token: token})
 
     state = GameServer.state(token)
 
@@ -24,23 +25,22 @@ defmodule SolitaireWeb.GameChannel do
   def fetch_game_state(%{
         foundation: foundation,
         cols: cols,
-        deck: deck,
-        deck_length: deck_length
+        deck: deck
+        # deck_length: deck_length
       }) do
     %{
       columns:
         Enum.map(cols, fn %{cards: cards} = map ->
           %{map | cards: convert_keyword_to_list(cards)}
         end),
-      deck_length: deck_length,
-      foundation: foundation |> convert_to_string(),
+      deck_length: deck |> List.flatten() |> length,
+      foundation: convert_to_string(foundation),
       deck: deck |> Enum.map(&convert_keyword_to_list/1) |> List.first()
     }
   end
 
   defp convert_to_string(map) do
-    map
-    |> Map.new(fn
+    Map.new(map, fn
       {k, %{rank: rank, prev: prev} = foundation} ->
         {k,
          foundation
@@ -66,6 +66,14 @@ defmodule SolitaireWeb.GameChannel do
     end)
   end
 
+  def handle_in("start_new_game", _params, %{assigns: %{token: token}} = socket) do
+    GameSupervisor.restart_game(token, %{})
+
+    state = GameServer.state(token)
+
+    {:reply, {:ok, fetch_game_state(state)}, socket}
+  end
+
   def handle_in(
         "move_from_column",
         %{
@@ -82,6 +90,26 @@ defmodule SolitaireWeb.GameChannel do
       {:error, old_state} ->
         {:reply, {:error, fetch_game_state(old_state)}, socket}
     end
+  end
+
+  def handle_in(
+        "move_to_foundation_from_column",
+        %{
+          "from_column" => from_column
+        },
+        %{assigns: %{token: token}} = socket
+      ) do
+    new_state = GameServer.move_to_foundation(token, from_column)
+    {:reply, {:ok, fetch_game_state(new_state)}, socket}
+  end
+
+  def handle_in(
+        "move_to_foundation_from_deck",
+        _payload,
+        %{assigns: %{token: token}} = socket
+      ) do
+    new_state = GameServer.move_to_foundation(token, :deck)
+    {:reply, {:ok, fetch_game_state(new_state)}, socket}
   end
 
   def handle_in("change", _params, %{assigns: %{token: token}} = socket) do

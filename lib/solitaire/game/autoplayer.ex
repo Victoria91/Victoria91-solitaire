@@ -92,7 +92,7 @@ defmodule Solitaire.Game.Autoplayer do
   end
 
   defp sleep_unless_test(timeout) do
-    if Mix.env() != :test do
+    unless Application.get_env(:solitaire, :test) do
       :timer.sleep(timeout)
     end
   end
