@@ -42,7 +42,7 @@ defmodule Solitaire.Game.Server do
 
   @spec init(any) :: {:ok, Games.t(), {:continue, :give_cards}}
   def init(%{game_state: game_state} = state) do
-    {:ok, update_game_state(state, game_state), {:continue, :automove}}
+    {:ok, update_game_state(state, game_state), {:continue, :load_given_state}}
   end
 
   def init(state) do
@@ -95,7 +95,7 @@ defmodule Solitaire.Game.Server do
     end)
   end
 
-  def handle_continue(:automove, state) do
+  def handle_continue(:load_given_state, state) do
     measure("automove", fn ->
       new_state = put_deck_length(state)
 
@@ -127,6 +127,10 @@ defmodule Solitaire.Game.Server do
     result = module(state).move_to_foundation(state, attr, opts)
 
     new_state = update_game_state(state, result)
+
+    if Keyword.get(opts, :auto) != true do
+      perform_automove_to_foundation(new_state)
+    end
 
     {:reply, new_state, new_state}
   end
@@ -170,7 +174,8 @@ defmodule Solitaire.Game.Server do
   end
 
   defp put_deck_length(%{deck: deck} = state) do
-    %{state | deck_length: length(deck)}
+    deck_length = Enum.find_index(deck, &(&1 == []))
+    %{state | deck_length: deck_length}
   end
 
   defp update_game_state(state, result) do

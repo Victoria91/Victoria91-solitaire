@@ -22,11 +22,15 @@ defmodule SolitaireWeb.GameChannel do
     {:noreply, socket}
   end
 
+  def handle_info(:win, socket) do
+    broadcast!(socket, "win", %{})
+    {:noreply, socket}
+  end
+
   def fetch_game_state(%{
         foundation: foundation,
         cols: cols,
         deck: deck
-        # deck_length: deck_length
       }) do
     %{
       columns:
