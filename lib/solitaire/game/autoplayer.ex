@@ -43,43 +43,53 @@ defmodule Solitaire.Game.Autoplayer do
       GameServer.move_to_foundation(pid, index)
 
       game = GameServer.state(pid)
-      broadcast_to_game_topic(pid, game)
+      broadcast_to_game_topic(pid, {:tick, game})
     end)
 
     new_game = GameServer.change(pid)
 
-    broadcast_to_game_topic(pid, new_game)
+    broadcast_to_game_topic(pid, {:tick, new_game})
 
     play(new_game, pid, count - 1)
   end
 
   @doc """
     Автоматически раскладывает оставшиеся карты на столе (вызывается когда колода пуста
-    и все карты на столе открыты). Бродкастит сообщение для liveview для обновления стола
+    и все карты на столе открыты). Бродкастит сообщение для обновления стейта
     на фронте
   """
 
   def perform_automove_to_foundation(
         %{
-          foundation: %{"club" => "K", "diamond" => "K", "heart" => "K", "spade" => "K"}
+          foundation: %{
+            club: %{rank: :K},
+            diamond: %{rank: :K},
+            heart: %{rank: :K},
+            spade: %{rank: :K}
+          }
         } = game,
-        _pid
-      ),
-      do: game
+        pid
+      ) do
+    broadcast_to_game_topic(pid, :win)
+    game
+  end
 
   def perform_automove_to_foundation(%{cols: cols, foundation: foundation} = game, pid) do
     sleep_unless_test(200)
-    GameServer.move_to_foundation(pid, :deck, auto: true)
 
     new_game =
       %{foundation: new_foundation} =
       cols
       |> Enum.with_index()
       |> Enum.reduce(game, fn {_col, index}, old_game ->
+        if index == 0 do
+          GameServer.move_to_foundation(pid, :deck, auto: true)
+        end
+
         game = GameServer.move_to_foundation(pid, index, auto: true)
 
         if old_game != game do
-          broadcast_to_game_topic(pid, game)
+          broadcast_to_game_topic(pid, {:tick, game})
         end
 
         sleep_unless_test(40)
@@ -97,7 +107,7 @@ defmodule Solitaire.Game.Autoplayer do
     end
   end
 
-  defp broadcast_to_game_topic(pid, game) do
-    Phoenix.PubSub.broadcast(Solitaire.PubSub, "game:#{pid}", {:tick, game})
+  defp broadcast_to_game_topic(pid, message) do
+    Phoenix.PubSub.broadcast(Solitaire.PubSub, "game:#{pid}", message)
   end
 end
