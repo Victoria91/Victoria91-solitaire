@@ -79,6 +79,15 @@ defmodule SolitaireWeb.GameChannel do
   end
 
   def handle_in(
+        "move_from_foundation",
+        %{"suit" => suit, "to_column" => to_column},
+        %{assigns: %{token: token}} = socket
+      ) do
+    new_state = GameServer.move_from_foundation(token, suit, to_column)
+    {:reply, {:ok, fetch_game_state(new_state)}, socket}
+  end
+
+  def handle_in(
         "move_from_column",
         %{
           "from_card_index" => card_index,

@@ -19,9 +19,10 @@ defmodule Solitaire.Game.Klondike do
   end
 
   @impl Games
-  def move_to_foundation(%{deck: deck, foundation: foundation} = game, :deck, opts \\ []) do
-    # auto = Keyword.get(opts, :auto, false)
 
+  def move_to_foundation(game, attr, opts \\ [])
+
+  def move_to_foundation(%{deck: deck, foundation: foundation} = game, :deck, opts) do
     if current = current(deck) do
       {from_suit, from_rank} = current
       foundation_rank = Foundation.fetch_rank_from_foundation(foundation, from_suit)
@@ -90,10 +91,6 @@ defmodule Solitaire.Game.Klondike do
     Берет следующую карту из колоды
   """
   @spec change(Game.t()) :: [tuple]
-
-  def change(%{deck: [h | [[] | _] = rest]}) do
-    split_deck_if_reached_the_end(rest ++ [h])
-  end
 
   def change(%{deck: [[] | _rest] = deck}) do
     split_deck_if_reached_the_end(deck)
