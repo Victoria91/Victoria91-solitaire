@@ -14,9 +14,16 @@ defmodule Solitaire.Game.Klondike.Foundation do
 
   def pop(foundation, suit) do
     case get_in(foundation, [suit, :rank]) do
-      nil -> foundation
-      @first_rank -> foundation
-      rank -> %{foundation | suit => %{from: nil, rank: prev_rank(rank)}}
+      nil ->
+        foundation
+
+      @first_rank ->
+        foundation
+
+      rank ->
+        new_rank = prev_rank(rank)
+
+        %{foundation | suit => %{from: nil, rank: new_rank, prev: prev_rank(new_rank)}}
     end
   end
 

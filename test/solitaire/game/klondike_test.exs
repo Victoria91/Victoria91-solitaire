@@ -28,7 +28,7 @@ defmodule Solitaire.Game.KlondikeTest do
 
       new_deck = Klondike.change(%{deck: deck})
       deck_chunk_length = Enum.map(new_deck, &length/1)
-      assert deck_chunk_length == [3, 3, 2, 0]
+      assert deck_chunk_length == [0, 2, 3, 3]
     end
 
     test "rest deck splitting" do
