@@ -96,7 +96,7 @@ defmodule Solitaire.Game.Server do
   end
 
   def handle_continue(:load_given_state, state) do
-    measure("automove", fn ->
+    measure("load_given_state", fn ->
       new_state = put_deck_length(state)
 
       perform_automove_to_foundation(new_state)
@@ -173,9 +173,14 @@ defmodule Solitaire.Game.Server do
     end
   end
 
+  defp put_deck_length(%{deck: [[]]} = state) do
+    %{state | deck_length: 0}
+  end
+
   defp put_deck_length(%{deck: deck} = state) do
     deck_length = Enum.find_index(deck, &(&1 == []))
-    %{state | deck_length: deck_length}
+
+    %{state | deck_length: if(deck_length == 0, do: length(deck), else: deck_length)}
   end
 
   defp update_game_state(state, result) do

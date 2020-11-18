@@ -18,6 +18,20 @@ defmodule Solitaire.Game.Klondike do
     Map.put(game, :deck, [[] | Games.split_deck_by(rest_deck, 3)])
   end
 
+  def load_win_state(_params) do
+    %Games{cols: []}
+    |> Map.put(:deck, [[], [{:spade, :K}]])
+    |> Map.put(
+      :foundation,
+      %{
+        spade: %{rank: :D, from: nil, prev: nil, count: 0},
+        diamond: %{rank: :K, from: nil, prev: nil, count: 0},
+        heart: %{rank: :K, from: nil, prev: nil, count: 0},
+        club: %{rank: :K, from: nil, prev: nil, count: 0}
+      }
+    )
+  end
+
   @impl Games
 
   def move_to_foundation(game, attr, opts \\ [])
@@ -46,6 +60,21 @@ defmodule Solitaire.Game.Klondike do
   end
 
   @impl Games
+
+  def move_to_foundation(
+        %{
+          foundation: %{
+            club: %{rank: :K},
+            diamond: %{rank: :K},
+            heart: %{rank: :K},
+            spade: %{rank: :K}
+          }
+        } = game,
+        _column,
+        _opts
+      ),
+      do: game
+
   def move_to_foundation(%{cols: cols, foundation: foundation} = game, from_col_num, opts) do
     auto = Keyword.get(opts, :auto, false)
 
@@ -105,6 +134,20 @@ defmodule Solitaire.Game.Klondike do
   end
 
   defp split_deck_if_reached_the_end(deck), do: deck
+
+  def move_from_foundation(
+        %{
+          foundation: %{
+            club: %{rank: :K},
+            diamond: %{rank: :K},
+            heart: %{rank: :K},
+            spade: %{rank: :K}
+          }
+        } = game,
+        _suit,
+        _to_col_num
+      ),
+      do: game
 
   def move_from_foundation(game, suit, to_col_num) when is_binary(suit),
     do: move_from_foundation(game, String.to_existing_atom(suit), to_col_num)
