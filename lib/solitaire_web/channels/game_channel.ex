@@ -30,14 +30,15 @@ defmodule SolitaireWeb.GameChannel do
   def fetch_game_state(%{
         foundation: foundation,
         cols: cols,
-        deck: deck
+        deck: deck,
+        deck_length: deck_length
       }) do
     %{
       columns:
         Enum.map(cols, fn %{cards: cards} = map ->
           %{map | cards: convert_keyword_to_list(cards)}
         end),
-      deck_length: deck |> List.flatten() |> length,
+      deck_length: deck_length,
       foundation: convert_to_string(foundation),
       deck: deck |> Enum.map(&convert_keyword_to_list/1) |> List.first()
     }
