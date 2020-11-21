@@ -19,13 +19,8 @@ defmodule SolitaireWeb.Router do
   scope "/", SolitaireWeb do
     pipe_through :browser
 
-    # get "/", PageController, :index
     live "/", GameLive
     get "/can_move", PageController, :can_move
+    get "/get_unique_token", PageController, :get_unique_token
   end
-
-  # Other scopes may use custom stacks.
-  # scope "/api", SolitaireWeb do
-  #   pipe_through :api
-  # end
 end
