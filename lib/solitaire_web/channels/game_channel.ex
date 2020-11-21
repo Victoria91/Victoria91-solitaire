@@ -4,16 +4,28 @@ defmodule SolitaireWeb.GameChannel do
   alias Solitaire.Game.Server, as: GameServer
   alias Solitaire.Game.Supervisor, as: GameSupervisor
 
-  def join(_topic, _params, socket) do
-    token = 16 |> :crypto.strong_rand_bytes() |> Base.url_encode64()
+  def join("game:" <> token, _params, socket) do
+    case validate_token(token) do
+      :ok ->
+        GameSupervisor.start_game(%{token: token})
 
-    GameSupervisor.start_game(%{token: token})
+        state = GameServer.state(token)
 
-    state = GameServer.state(token)
+        Phoenix.PubSub.subscribe(Solitaire.PubSub, "game:#{token}")
 
-    Phoenix.PubSub.subscribe(Solitaire.PubSub, "game:#{token}")
+        {:ok, fetch_game_state(state), assign(socket, :token, token)}
 
-    {:ok, fetch_game_state(state), assign(socket, :token, token)}
+      :error ->
+        {:error, :bad_token}
+    end
+  end
+
+  defp validate_token(token) do
+    if String.ends_with?(token, "==") && String.length(token) >= 24 do
+      :ok
+    else
+      :error
+    end
   end
 
   def handle_info({:tick, game}, socket) do
@@ -24,6 +36,11 @@ defmodule SolitaireWeb.GameChannel do
 
   def handle_info(:win, socket) do
     broadcast!(socket, "win", %{})
+    {:noreply, socket}
+  end
+
+  def handle_out(event, payload, socket) do
+    push(socket, event, payload)
     {:noreply, socket}
   end
 
@@ -71,7 +88,7 @@ defmodule SolitaireWeb.GameChannel do
     end)
   end
 
-  def handle_in("start_new_game", _params, %{assigns: %{token: token}} = socket) do
+  def handle_in("start_new_game", _params, %{topic: "game:" <> token} = socket) do
     GameSupervisor.restart_game(token, %{})
 
     state = GameServer.state(token)
@@ -82,7 +99,7 @@ defmodule SolitaireWeb.GameChannel do
   def handle_in(
         "move_from_foundation",
         %{"suit" => suit, "to_column" => to_column},
-        %{assigns: %{token: token}} = socket
+        %{topic: "game:" <> token} = socket
       ) do
     new_state = GameServer.move_from_foundation(token, suit, to_column)
     {:reply, {:ok, fetch_game_state(new_state)}, socket}
@@ -95,7 +112,7 @@ defmodule SolitaireWeb.GameChannel do
           "from_column" => from_column,
           "to_column" => to_column
         },
-        %{assigns: %{token: token}} = socket
+        %{topic: "game:" <> token} = socket
       ) do
     case GameServer.move_from_column(token, {from_column, card_index}, to_column) do
       {:ok, new_state} ->
@@ -111,7 +128,7 @@ defmodule SolitaireWeb.GameChannel do
         %{
           "from_column" => from_column
         },
-        %{assigns: %{token: token}} = socket
+        %{topic: "game:" <> token} = socket
       ) do
     new_state = GameServer.move_to_foundation(token, from_column)
     {:reply, {:ok, fetch_game_state(new_state)}, socket}
@@ -120,13 +137,13 @@ defmodule SolitaireWeb.GameChannel do
   def handle_in(
         "move_to_foundation_from_deck",
         _payload,
-        %{assigns: %{token: token}} = socket
+        %{topic: "game:" <> token} = socket
       ) do
     new_state = GameServer.move_to_foundation(token, :deck)
     {:reply, {:ok, fetch_game_state(new_state)}, socket}
   end
 
-  def handle_in("change", _params, %{assigns: %{token: token}} = socket) do
+  def handle_in("change", _params, %{topic: "game:" <> token} = socket) do
     new_state = GameServer.change(token)
     {:reply, {:ok, fetch_game_state(new_state)}, socket}
   end
@@ -134,7 +151,7 @@ defmodule SolitaireWeb.GameChannel do
   def handle_in(
         "move_from_deck",
         %{"to_column" => to_column},
-        %{assigns: %{token: token}} = socket
+        %{topic: "game:" <> token} = socket
       ) do
     case GameServer.move_from_deck(token, to_column) do
       {:ok, new_state} ->

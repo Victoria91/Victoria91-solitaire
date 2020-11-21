@@ -22,6 +22,10 @@ defmodule SolitaireWeb.PageController do
     text(conn, can_move)
   end
 
+  def get_unique_token(conn, _params) do
+    text(conn, 16 |> :crypto.strong_rand_bytes() |> Base.url_encode64())
+  end
+
   defp convert_to_rank(rank) do
     case Integer.parse(rank) do
       {integer, ""} -> integer

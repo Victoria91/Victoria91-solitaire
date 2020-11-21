@@ -3,7 +3,7 @@ defmodule SolitaireWeb.UserSocket do
 
   ## Channels
   # channel "room:*", SolitaireWeb.RoomChannel
-  channel "game", SolitaireWeb.GameChannel
+  channel "game:*", SolitaireWeb.GameChannel
 
   # Socket params are passed from the client and can
   # be used to verify and authenticate a user. After
