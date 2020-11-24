@@ -13,7 +13,7 @@ defmodule SolitaireWeb.GameChannel do
 
         Phoenix.PubSub.subscribe(Solitaire.PubSub, "game:#{token}")
 
-        {:ok, fetch_game_state(state), assign(socket, :token, token)}
+        {:ok, fetch_game_state(state), socket}
 
       :error ->
         {:error, :bad_token}

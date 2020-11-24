@@ -40,7 +40,6 @@ defmodule Solitaire.Game.Server do
     end)
   end
 
-  @spec init(any) :: {:ok, Games.t(), {:continue, :give_cards}}
   def init(%{game_state: game_state} = state) do
     {:ok, update_game_state(state, game_state), {:continue, :load_given_state}}
   end
@@ -87,8 +86,7 @@ defmodule Solitaire.Game.Server do
 
   def handle_continue(:give_cards, state) do
     measure("give_cards", fn ->
-      new_state =
-        put_deck_length(update_game_state(state, module(state).load_game(suit_count(state))))
+      new_state = update_game_state(state, module(state).load_game(suit_count(state)))
 
       perform_automove_to_foundation(new_state)
       {:noreply, new_state}
@@ -111,10 +109,7 @@ defmodule Solitaire.Game.Server do
   def handle_call({:move_from_foundation, suit, column}, _from, %{type: :klondike} = state) do
     result = module(state).move_from_foundation(state, suit, column)
 
-    new_state =
-      state
-      |> update_game_state(result)
-      |> put_deck_length
+    new_state = update_game_state(state, result)
 
     {:reply, new_state, new_state}
   end
@@ -137,8 +132,7 @@ defmodule Solitaire.Game.Server do
 
   def handle_call(:change, _from, state) do
     result = Map.put(state, :deck, module(state).change(state))
-    new_state = state |> update_game_state(result) |> put_deck_length
-
+    new_state = update_game_state(state, result)
     perform_automove_to_foundation(new_state)
     {:reply, new_state, new_state}
   end
@@ -189,6 +183,7 @@ defmodule Solitaire.Game.Server do
     |> Map.put(:deck, result.deck)
     |> Map.put(:deck_length, result.deck_length)
     |> Map.put(:foundation, result.foundation)
+    |> put_deck_length()
   end
 
   def perform_automove_to_foundation(%{type: :klondike, token: token} = game) do
