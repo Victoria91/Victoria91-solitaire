@@ -21,7 +21,12 @@ defmodule Solitaire.Game.Autoplayer do
   @doc "Автобой"
   def play(
         %{
-          foundation: %{"club" => "K", "diamond" => "K", "heart" => "K", "spade" => "K"}
+          foundation: %{
+            club: %{rank: :K},
+            diamond: %{rank: :K},
+            heart: %{rank: :K},
+            spade: %{rank: :K}
+          }
         } = game,
         _pid,
         _count

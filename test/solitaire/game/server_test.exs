@@ -18,8 +18,8 @@ defmodule Solitaire.Game.ServerTest do
 
     test "when there is state in mnesia - loads it to server state", %{token: token, state: state} do
       # MnesiaPersister.save(token, :klondike, state)
-      {:ok, _pid} = GameServer.start_link(%{token: token, type: :klondike})
       assert state == Map.drop(GameServer.state(token), [:token, :type])
+      {:ok, _pid} = GameServer.start_link(%{token: token, type: :klondike})
     end
 
     test "when A and 2 available for foundation - puts them to foundation", %{token: token} do
@@ -250,6 +250,81 @@ defmodule Solitaire.Game.ServerTest do
                heart: %{from: nil, prev: nil, rank: nil},
                spade: %{from: nil, prev: nil, rank: 2}
              }
+    end
+  end
+
+  describe "cancel_move" do
+    test "returns previous state", %{token: token} do
+      {:ok, _pid} =
+        GameServer.start_link(%{
+          token: token,
+          type: :klondike,
+          game_state: %{
+            deck_length: 0,
+            foundation: %{},
+            deck: [[spade: 7, spade: 4, spade: 2], [spade: 8, heart: 5, spade: 6]],
+            cols: [
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []}
+            ]
+          }
+        })
+
+      state = GameServer.state(token)
+
+      GameServer.change(token)
+
+      GameServer.cancel_move(token)
+
+      new_state = GameServer.state(token)
+
+      assert state == new_state
+    end
+
+    test "not rollbacks state after win", %{token: token} do
+      {:ok, _pid} =
+        GameServer.start_link(%{
+          token: token,
+          type: :klondike,
+          game_state: %{
+            deck_length: 0,
+            foundation: %{
+              club: %{rank: :D},
+              diamond: %{rank: :K},
+              heart: %{rank: :K},
+              spade: %{rank: :K}
+            },
+            deck: [[club: :K], []],
+            cols: [
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []},
+              %{cards: []}
+            ]
+          }
+        })
+
+      assert %{
+               club: %{rank: :K},
+               diamond: %{rank: :K},
+               heart: %{rank: :K},
+               spade: %{rank: :K}
+             } = GameServer.move_to_foundation(token, :deck).foundation
+
+      assert %{
+               club: %{rank: :K},
+               diamond: %{rank: :K},
+               heart: %{rank: :K},
+               spade: %{rank: :K}
+             } = GameServer.cancel_move(token).foundation
     end
   end
 

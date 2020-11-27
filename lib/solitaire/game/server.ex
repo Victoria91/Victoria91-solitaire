@@ -68,6 +68,12 @@ defmodule Solitaire.Game.Server do
     end)
   end
 
+  def cancel_move(token) do
+    measure("cancel_move", fn ->
+      GenServer.call(name(token), :cancel_move)
+    end)
+  end
+
   def move_from_deck(token, column) do
     measure("move_from_deck", fn ->
       GenServer.call(name(token), {:move_from_deck, column})
@@ -138,6 +144,29 @@ defmodule Solitaire.Game.Server do
   end
 
   def handle_call(
+        :cancel_move,
+        _from,
+        %{
+          foundation: %{
+            club: %{rank: :K},
+            diamond: %{rank: :K},
+            heart: %{rank: :K},
+            spade: %{rank: :K}
+          }
+        } = state
+      ) do
+    {:reply, state, state}
+  end
+
+  def handle_call(:cancel_move, _from, %{previous: %{deck: _} = previous_state}) do
+    {:reply, previous_state, previous_state}
+  end
+
+  def handle_call(:cancel_move, _from, state) do
+    {:reply, state, state}
+  end
+
+  def handle_call(
         {:move_from_deck, column},
         _from,
         state
@@ -177,12 +206,15 @@ defmodule Solitaire.Game.Server do
     %{state | deck_length: if(deck_length == 0, do: length(deck), else: deck_length)}
   end
 
+  defp update_game_state(state, state), do: state
+
   defp update_game_state(state, result) do
     state
     |> Map.put(:cols, result.cols)
     |> Map.put(:deck, result.deck)
     |> Map.put(:deck_length, result.deck_length)
     |> Map.put(:foundation, result.foundation)
+    |> Map.put(:previous, state)
     |> put_deck_length()
   end
 
