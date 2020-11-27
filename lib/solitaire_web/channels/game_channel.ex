@@ -148,6 +148,11 @@ defmodule SolitaireWeb.GameChannel do
     {:reply, {:ok, fetch_game_state(new_state)}, socket}
   end
 
+  def handle_in("cancel_move", _params, %{topic: "game:" <> token} = socket) do
+    new_state = GameServer.cancel_move(token)
+    {:reply, {:ok, fetch_game_state(new_state)}, socket}
+  end
+
   def handle_in(
         "move_from_deck",
         %{"to_column" => to_column},
