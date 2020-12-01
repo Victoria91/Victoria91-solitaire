@@ -2,6 +2,7 @@ defmodule Solitaire.Game.Server do
   use GenServer
 
   alias Solitaire.Statix
+  alias Solitaire.Games
   alias Solitaire.Game.Autoplayer
 
   require Logger
@@ -92,7 +93,9 @@ defmodule Solitaire.Game.Server do
 
   def handle_continue(:give_cards, state) do
     measure("give_cards", fn ->
-      new_state = update_game_state(state, module(state).load_game(suit_count(state)))
+      suit_count = suit_count(state)
+      state = Map.put(state, :suit_count, suit_count)
+      new_state = update_game_state(state, module(state).load_game(suit_count))
 
       perform_automove_to_foundation(new_state)
       {:noreply, new_state}
@@ -101,10 +104,8 @@ defmodule Solitaire.Game.Server do
 
   def handle_continue(:load_given_state, state) do
     measure("load_given_state", fn ->
-      new_state = put_deck_length(state)
-
-      perform_automove_to_foundation(new_state)
-      {:noreply, new_state}
+      perform_automove_to_foundation(state)
+      {:noreply, state}
     end)
   end
 
@@ -137,7 +138,8 @@ defmodule Solitaire.Game.Server do
   end
 
   def handle_call(:change, _from, state) do
-    result = Map.put(state, :deck, module(state).change(state))
+    result = module(state).change(state)
+
     new_state = update_game_state(state, result)
     perform_automove_to_foundation(new_state)
     {:reply, new_state, new_state}
@@ -155,6 +157,19 @@ defmodule Solitaire.Game.Server do
           }
         } = state
       ) do
+    {:reply, state, state}
+  end
+
+  def handle_call(
+        :cancel_move,
+        _from,
+        %{
+          foundation: %{
+            sorted: sorted
+          }
+        } = state
+      )
+      when length(sorted) == 8 do
     {:reply, state, state}
   end
 
@@ -196,42 +211,44 @@ defmodule Solitaire.Game.Server do
     end
   end
 
-  defp put_deck_length(%{deck: [[]]} = state) do
-    %{state | deck_length: 0}
-  end
+  defp calculate_deck_length(%{deck: [[]]} = _state), do: 0
 
-  defp put_deck_length(%{deck: deck} = state) do
+  defp calculate_deck_length(%{deck: deck} = _state) do
     deck_length = Enum.find_index(deck, &(&1 == []))
-
-    %{state | deck_length: if(deck_length == 0, do: length(deck), else: deck_length)}
+    if(deck_length == 0, do: length(deck), else: deck_length)
   end
 
   defp update_game_state(state, state), do: state
 
   defp update_game_state(state, result) do
-    state
-    |> Map.put(:cols, result.cols)
-    |> Map.put(:deck, result.deck)
-    |> Map.put(:deck_length, result.deck_length)
-    |> Map.put(:foundation, result.foundation)
-    |> Map.put(:previous, state)
-    |> put_deck_length()
+    %Games{
+      cols: result.cols,
+      deck: result.deck,
+      deck_length: calculate_deck_length(result),
+      foundation: result.foundation,
+      previous: state,
+      suit_count: state.suit_count,
+      token: state.token,
+      type: state.type
+    }
   end
 
-  def perform_automove_to_foundation(%{type: :klondike, token: token} = game) do
+  def perform_automove_to_foundation(%{token: token} = game) do
     Task.async(fn ->
       Autoplayer.perform_automove_to_foundation(game, token)
     end)
   end
 
-  def perform_automove_to_foundation(_state), do: false
-
   def handle_info(_msg, state) do
     {:noreply, state}
   end
 
-  defp suit_count(%{count: count}) do
-    {val, _} = Integer.parse(count)
+  defp suit_count(%{suit_count: suit_count}) when is_integer(suit_count) do
+    suit_count
+  end
+
+  defp suit_count(%{suit_count: suit_count}) do
+    {val, _} = Integer.parse(suit_count)
     val
   end
 

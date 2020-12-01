@@ -25,6 +25,7 @@ defmodule Solitaire.Game.ServerTest do
     test "when A and 2 available for foundation - puts them to foundation", %{token: token} do
       {:ok, _pid} =
         GameServer.start_link(%{
+          suit_count: 1,
           game_state: %{
             cols: [
               %{cards: [{:spade, :A}], unplayed: 0},
@@ -64,6 +65,7 @@ defmodule Solitaire.Game.ServerTest do
          %{token: token} do
       {:ok, _pid} =
         GameServer.start_link(%{
+          suit_count: 1,
           game_state: %{
             cols: [
               %{cards: [{:spade, 3}], unplayed: 0},
@@ -102,6 +104,7 @@ defmodule Solitaire.Game.ServerTest do
          %{token: token} do
       {:ok, _pid} =
         GameServer.start_link(%{
+          suit_count: 1,
           game_state: %{
             cols: [
               %{cards: [{:spade, 3}], unplayed: 0},
@@ -141,6 +144,7 @@ defmodule Solitaire.Game.ServerTest do
          %{token: token} do
       {:ok, _pid} =
         GameServer.start_link(%{
+          suit_count: 1,
           game_state: %{
             cols: [
               %{cards: [{:spade, 3}], unplayed: 0},
@@ -179,6 +183,7 @@ defmodule Solitaire.Game.ServerTest do
          %{token: token} do
       {:ok, _pid} =
         GameServer.start_link(%{
+          suit_count: 1,
           game_state: %{
             cols: [
               %{cards: [{:spade, 3}], unplayed: 0},
@@ -217,6 +222,7 @@ defmodule Solitaire.Game.ServerTest do
          %{token: token} do
       {:ok, _pid} =
         GameServer.start_link(%{
+          suit_count: 1,
           game_state: %{
             cols: [
               %{cards: []},
@@ -257,6 +263,7 @@ defmodule Solitaire.Game.ServerTest do
     test "returns previous state", %{token: token} do
       {:ok, _pid} =
         GameServer.start_link(%{
+          suit_count: 1,
           token: token,
           type: :klondike,
           game_state: %{
@@ -289,6 +296,7 @@ defmodule Solitaire.Game.ServerTest do
     test "not rollbacks state after win", %{token: token} do
       {:ok, _pid} =
         GameServer.start_link(%{
+          suit_count: 1,
           token: token,
           type: :klondike,
           game_state: %{

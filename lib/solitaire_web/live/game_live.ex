@@ -51,7 +51,7 @@ defmodule SolitaireWeb.GameLive do
         %{"type" => type, "count" => count},
         %{assigns: %{token: token}} = socket
       ) do
-    GameSupervisor.restart_game(token, %{type: type, count: count})
+    GameSupervisor.restart_game(token, %{type: type, suit_count: count})
 
     state = GameServer.state(token)
 

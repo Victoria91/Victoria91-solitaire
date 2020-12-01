@@ -1,5 +1,5 @@
 <%= if @type == :klondike do %>
-    <%= Enum.map(Map.keys(@foundation), fn suit -> %>
+    <%= Enum.map(Map.keys(@foundation) |> Enum.reject(& &1 == :sorted), fn suit -> %>
         <li id=<%= to_string(suit)<>"s" %> class="<%= "#{suit}<>s" %> pile" data-pile=<%= "#{suit}<>s" %> data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;" phx-click="put" phx-value-suit=<%= suit %> >
             <ul>
             <%= render("klondike_fnd.html", foundation: @foundation[suit], suit: suit, pop: @pop) %>
@@ -8,7 +8,7 @@
     <% end) %>
 <% else %>
     <%= Map.keys(@foundation) |> Enum.map(fn suit -> %>
-        <%= if @foundation[suit][:count] != 0 do %>
+        <%= if @foundation[suit][:count] && @foundation[suit][:count] != 0 do %>
             <%= Enum.map(1 .. @foundation[suit][:count] |> IO.inspect(label: "range"), fn _ -> %>
                 <li class="<%= "#{to_string(suit)}<>s" %> pile <%= @type %>" data-pile=<%= "#{to_string(suit)}<>s" %> data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;" phx-click="put" phx-value-suit=<%= suit %> >
                     <ul>
@@ -20,7 +20,7 @@
 
     <% end) %>
 
-    <%= if @unplayed_fnd_cols_count > 0 do %>
+    <%= if @unplayed_fnd_cols_count  > 0 do %>
         <%= Enum.map(1.. @unplayed_fnd_cols_count, fn _ -> %>
             <li class="pile <%= @type %>" data-empty="true" data-played="0" data-unplayed="0" style="height: 140px;" phx-click="put"  >
                 <ul>
