@@ -14,7 +14,7 @@ defmodule Solitaire.Game.Klondike do
     game =
       %{deck: rest_deck} =
       Enum.reduce(0..6, shuffle(), fn i, game ->
-        Games.take_cards_to_col(game, i, i + 1, i, 11)
+        Games.take_cards_to_col(game, i, i + 1, i, 12)
       end)
 
     Map.put(game, :deck, [[] | Games.split_deck_by(rest_deck, suit_count)])
