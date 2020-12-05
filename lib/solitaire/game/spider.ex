@@ -12,11 +12,11 @@ defmodule Solitaire.Game.Spider do
   end
 
   defp take_cards_to_col(game, col_num) when col_num in 0..3 do
-    Games.take_cards_to_col(game, col_num, 6, 5)
+    Games.take_cards_to_col(game, col_num, 6, 5, 1)
   end
 
   defp take_cards_to_col(game, col_num) do
-    Games.take_cards_to_col(game, col_num, 5, 4)
+    Games.take_cards_to_col(game, col_num, 5, 4, 1)
   end
 
   def shuffle(suits_count) do
@@ -40,10 +40,12 @@ defmodule Solitaire.Game.Spider do
   def move_to_foundation(game, :deck, _opts), do: game
 
   def move_to_foundation(%{cols: cols} = game, col_num, _opts) do
-    %{cards: [from | _] = cards} = Enum.at(cols, col_num)
+    %{cards: cards} = Enum.at(cols, col_num)
     cards_to_move = Enum.take(cards, ranks_length())
 
-    with true <- cards_in_one_suit?(cards_to_move),
+    with from when not is_nil(from) <- List.first(cards),
+         true <- length(cards_to_move) == ranks_length(),
+         true <- cards_in_one_suit?(cards_to_move),
          true <- cards_in_sequence?(cards_to_move) do
       Games.move_from_column_to_foundation(
         game,
@@ -74,7 +76,7 @@ defmodule Solitaire.Game.Spider do
         end)
         |> Map.put(:deck, rest)
 
-      {:ok, new_game}
+      {:ok, update_moveable(new_game, 0..(length(cols) - 1))}
     else
       {:error, game}
     end
@@ -82,6 +84,7 @@ defmodule Solitaire.Game.Spider do
 
   def move_from_deck(game, _param), do: {:error, game}
 
+  @impl Games
   def change(game), do: game
 
   defp all_cols_are_non_empty?(cols) do
@@ -92,13 +95,38 @@ defmodule Solitaire.Game.Spider do
   end
 
   @impl Games
-  def move_from_column(game, from_col_num, to_col_num) do
-    Games.move_cards_from_column(
-      game,
-      from_col_num,
-      to_col_num,
-      &can_move?(&1, &2)
-    )
+  def move_from_column(game, {column_index, _card_index} = from_col_num, to_col_num) do
+    case Games.move_cards_from_column(
+           game,
+           from_col_num,
+           to_col_num,
+           &can_move?(&1, &2)
+         ) do
+      {:ok, game} -> {:ok, update_moveable(game, [column_index, to_col_num])}
+      {:error, game} -> {:error, game}
+    end
+  end
+
+  defp update_moveable(game, indexes) do
+    Enum.reduce(indexes, game, fn x, %{cols: cols} = new_game ->
+      column = Enum.at(cols, x)
+
+      new_cols =
+        List.replace_at(cols, x, %{column | moveable: find_unmoveable_index(column[:cards])})
+
+      Map.put(new_game, :cols, new_cols)
+    end)
+  end
+
+  defp find_unmoveable_index(cards) do
+    Enum.reduce_while(cards, 0, fn _card, acc ->
+      if !cards_in_one_suit?(Enum.take(cards, acc + 1)) ||
+           !cards_in_sequence?(Enum.take(cards, acc + 1)) do
+        {:halt, acc}
+      else
+        {:cont, acc + 1}
+      end
+    end)
   end
 
   @impl Games

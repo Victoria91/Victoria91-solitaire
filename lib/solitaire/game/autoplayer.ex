@@ -79,6 +79,19 @@ defmodule Solitaire.Game.Autoplayer do
     game
   end
 
+  def perform_automove_to_foundation(
+        %{
+          foundation: %{
+            sorted: sorted
+          }
+        } = game,
+        pid
+      )
+      when length(sorted) == 8 do
+    broadcast_to_game_topic(pid, :win)
+    game
+  end
+
   def perform_automove_to_foundation(%{cols: cols, foundation: foundation} = game, pid) do
     sleep_unless_test(200)
 

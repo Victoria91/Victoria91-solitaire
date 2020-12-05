@@ -13,8 +13,9 @@ defmodule Solitaire.Game.KlondikeTest do
       game: game
     } do
       %{deck: [h | rest] = deck} = game
-      rest_deck = res = Klondike.change(game)
-      assert rest ++ [h] == res
+      game = Map.put(game, :suit_count, 3)
+      %{deck: rest_deck} = Klondike.change(game)
+      assert rest ++ [h] == rest_deck
       assert length(rest_deck) == length(deck)
     end
 
@@ -26,7 +27,7 @@ defmodule Solitaire.Game.KlondikeTest do
         [club: :K, heart: 7, club: 3]
       ]
 
-      new_deck = Klondike.change(%{deck: deck})
+      %{deck: new_deck} = Klondike.change(%{deck: deck})
       deck_chunk_length = Enum.map(new_deck, &length/1)
       assert deck_chunk_length == [0, 2, 3, 3]
     end
@@ -38,7 +39,7 @@ defmodule Solitaire.Game.KlondikeTest do
         [{:heart, 8}, {:club, 10}, {:club, 6}]
       ]
 
-      new_deck = Klondike.change(%{deck: deck})
+      %{deck: new_deck} = Klondike.change(%{deck: deck, suit_count: 3})
       deck_chunk_length = Enum.map(new_deck, &length/1)
       assert deck_chunk_length == [3, 2, 0]
     end
@@ -69,8 +70,8 @@ defmodule Solitaire.Game.KlondikeTest do
       initial_deck = [
         [{:heart, 4}],
         [{:spade, 4}, {:club, 8}, {:club, :A}],
-        [{:spade, 3}, {:club, 6}, {:diamond, 10}],
-        []
+        [],
+        [{:spade, 3}, {:club, 6}, {:diamond, 10}]
       ]
 
       to_column = %{cards: [{:spade, 5}], unplayed: 0}
@@ -80,9 +81,16 @@ defmodule Solitaire.Game.KlondikeTest do
         game
         |> Map.put(:deck, initial_deck)
         |> Map.put(:cols, cols)
+        |> Map.put(:suit_count, 3)
 
       {:ok, %{deck: result_deck, cols: result_cols}} = Klondike.move_from_deck(game, 2)
-      assert result_deck == Enum.slice(initial_deck, 1..-1)
+
+      assert result_deck == [
+               [{:spade, 3}, {:club, 6}, {:diamond, 10}],
+               [{:spade, 4}, {:club, 8}, {:club, :A}],
+               []
+             ]
+
       %{cards: result_cards} = Enum.at(result_cols, 2)
       assert result_cards == [{:heart, 4}, {:spade, 5}]
     end
@@ -103,6 +111,7 @@ defmodule Solitaire.Game.KlondikeTest do
         game
         |> Map.put(:deck, initial_deck)
         |> Map.put(:cols, cols)
+        |> Map.put(:suit_count, 3)
 
       {:ok, %{deck: result_deck, cols: result_cols}} = Klondike.move_from_deck(game, 2)
       assert result_deck == [[{:diamond, 2}, {:heart, :D}, {:heart, 3}], []]
@@ -165,7 +174,7 @@ defmodule Solitaire.Game.KlondikeTest do
 
   describe "#move_to_foundation/2 (game, :deck)" do
     test "when foundation is nil - A is available for move" do
-      game = %{deck: [[{:spade, :A}], []], foundation: %{spade: nil}}
+      game = %{deck: [[{:spade, :A}], []], foundation: %{spade: nil}, suit_count: 3}
 
       Klondike.move_to_foundation(game, :deck)
 
@@ -176,9 +185,13 @@ defmodule Solitaire.Game.KlondikeTest do
     end
 
     test "with non-empty foundation - next rank is available" do
-      game = %{deck: [[{:spade, 2}], []], foundation: %{spade: %{rank: :A}}}
+      game = %{suit_count: 1, deck: [[{:spade, 2}], []], foundation: %{spade: %{rank: :A}}}
 
-      assert %{deck: [[]], foundation: %{spade: %{from: ["deck"], prev: :A, rank: 2}}} ==
+      assert %{
+               suit_count: 1,
+               deck: [[]],
+               foundation: %{spade: %{from: ["deck"], prev: :A, rank: 2}}
+             } ==
                Klondike.move_to_foundation(game, :deck)
     end
 
@@ -189,7 +202,8 @@ defmodule Solitaire.Game.KlondikeTest do
           [],
           [heart: 3, club: 5, heart: 10]
         ],
-        foundation: %{heart: %{rank: :A}}
+        foundation: %{heart: %{rank: :A}},
+        suit_count: 3
       }
 
       %{

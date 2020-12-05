@@ -10,14 +10,17 @@ defmodule Solitaire.Game.Klondike do
   @deck Enum.flat_map(Games.ranks(), fn r -> Enum.map(Games.suits(), fn s -> {s, r} end) end)
 
   @impl Solitaire.Games
-  def load_game(_params) do
+  def load_game(suit_count) do
     game =
       %{deck: rest_deck} =
-      Enum.reduce(0..6, shuffle(), fn i, game -> Games.take_cards_to_col(game, i, i + 1, i) end)
+      Enum.reduce(0..6, shuffle(), fn i, game ->
+        Games.take_cards_to_col(game, i, i + 1, i, 11)
+      end)
 
-    Map.put(game, :deck, [[] | Games.split_deck_by(rest_deck, 3)])
+    Map.put(game, :deck, [[] | Games.split_deck_by(rest_deck, suit_count)])
   end
 
+  @spec load_win_state(any) :: Solitaire.Games.t()
   def load_win_state(_params) do
     %Games{cols: []}
     |> Map.put(:deck, [[], [{:spade, :K}]])
@@ -104,10 +107,14 @@ defmodule Solitaire.Game.Klondike do
     end
   end
 
-  defp move_from_deck_to_foundation(%{foundation: foundation, deck: deck} = game, suit, from) do
+  defp move_from_deck_to_foundation(
+         %{foundation: foundation, deck: deck, suit_count: suit_count} = game,
+         suit,
+         from
+       ) do
     game
     |> Map.put(:foundation, Foundation.push(foundation, suit, from))
-    |> Map.put(:deck, deck |> rest_deck |> split_deck_if_reached_the_end())
+    |> Map.put(:deck, deck |> rest_deck |> split_deck_if_reached_the_end(suit_count))
   end
 
   @doc "Возвращает перемешанную колоду карт"
@@ -119,21 +126,22 @@ defmodule Solitaire.Game.Klondike do
   @doc """
     Берет следующую карту из колоды
   """
-  @spec change(Game.t()) :: [tuple]
+  @spec change(Game.t()) :: Games.t()
+  @impl Solitaire.Games
 
-  def change(%{deck: [[] | _rest] = deck}) do
-    split_deck_if_reached_the_end(deck)
+  def change(%{deck: [[] | _rest] = deck, suit_count: suit_count} = game) do
+    %{game | deck: split_deck_if_reached_the_end(deck, suit_count)}
   end
 
-  def change(%{deck: [h | rest]}) do
-    rest ++ [h]
+  def change(%{deck: [h | rest]} = game) do
+    %{game | deck: rest ++ [h]}
   end
 
-  defp split_deck_if_reached_the_end([[] | rest]) do
-    (rest |> List.flatten() |> Games.split_deck_by(3)) ++ [[]]
+  defp split_deck_if_reached_the_end([[] | rest], suit_count) do
+    (rest |> List.flatten() |> Games.split_deck_by(suit_count)) ++ [[]]
   end
 
-  defp split_deck_if_reached_the_end(deck), do: deck
+  defp split_deck_if_reached_the_end(deck, _suit_count), do: deck
 
   def move_from_foundation(
         %{
@@ -171,7 +179,7 @@ defmodule Solitaire.Game.Klondike do
   end
 
   @impl Games
-  @spec move_from_column(%{cols: any}, integer, integer) ::
+  @spec move_from_column(%{cols: any}, {integer, integer}, integer) ::
           {:error, Games.t()} | {:ok, Games.t()}
   def move_from_column(game, from_col_num, to_col_num) do
     Games.move_cards_from_column(game, from_col_num, to_col_num, &can_move?(&1, &2))
@@ -182,7 +190,8 @@ defmodule Solitaire.Game.Klondike do
   end
 
   defp rest_deck([[_current | []] | rest_deck]) do
-    rest_deck
+    last_cards = List.last(rest_deck)
+    [last_cards | Enum.take(rest_deck, length(rest_deck) - 1)]
   end
 
   defp rest_deck([[_current | rest] | rest_deck]) do
@@ -194,16 +203,16 @@ defmodule Solitaire.Game.Klondike do
   end
 
   @impl Games
-  @spec move_from_deck(%{cols: any, deck: [...]}, integer) ::
+  @spec move_from_deck(%{cols: any, deck: [...], suit_count: integer()}, integer) ::
           {:ok, Games.t()} | {:error, Games.t()}
   def move_from_deck(
-        %{deck: deck, cols: cols} = game,
+        %{deck: deck, cols: cols, suit_count: suit_count} = game,
         column
       ) do
     if deck_non_empty?(deck) do
       current = current(deck)
 
-      deck = deck |> rest_deck() |> split_deck_if_reached_the_end()
+      deck = deck |> rest_deck() |> split_deck_if_reached_the_end(suit_count)
 
       col = %{cards: cards} = Enum.at(cols, column)
       upper_card = List.first(cards)
