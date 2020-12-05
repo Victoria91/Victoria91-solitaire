@@ -190,7 +190,8 @@ defmodule Solitaire.Game.Klondike do
   end
 
   defp rest_deck([[_current | []] | rest_deck]) do
-    rest_deck
+    last_cards = List.last(rest_deck)
+    [last_cards | Enum.take(rest_deck, length(rest_deck) - 1)]
   end
 
   defp rest_deck([[_current | rest] | rest_deck]) do
@@ -202,7 +203,7 @@ defmodule Solitaire.Game.Klondike do
   end
 
   @impl Games
-  @spec move_from_deck(%{cols: any, deck: [...]}, integer) ::
+  @spec move_from_deck(%{cols: any, deck: [...], suit_count: integer()}, integer) ::
           {:ok, Games.t()} | {:error, Games.t()}
   def move_from_deck(
         %{deck: deck, cols: cols, suit_count: suit_count} = game,

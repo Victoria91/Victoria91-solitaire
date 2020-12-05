@@ -70,8 +70,8 @@ defmodule Solitaire.Game.KlondikeTest do
       initial_deck = [
         [{:heart, 4}],
         [{:spade, 4}, {:club, 8}, {:club, :A}],
-        [{:spade, 3}, {:club, 6}, {:diamond, 10}],
-        []
+        [],
+        [{:spade, 3}, {:club, 6}, {:diamond, 10}]
       ]
 
       to_column = %{cards: [{:spade, 5}], unplayed: 0}
@@ -81,9 +81,16 @@ defmodule Solitaire.Game.KlondikeTest do
         game
         |> Map.put(:deck, initial_deck)
         |> Map.put(:cols, cols)
+        |> Map.put(:suit_count, 3)
 
       {:ok, %{deck: result_deck, cols: result_cols}} = Klondike.move_from_deck(game, 2)
-      assert result_deck == Enum.slice(initial_deck, 1..-1)
+
+      assert result_deck == [
+               [{:spade, 3}, {:club, 6}, {:diamond, 10}],
+               [{:spade, 4}, {:club, 8}, {:club, :A}],
+               []
+             ]
+
       %{cards: result_cards} = Enum.at(result_cols, 2)
       assert result_cards == [{:heart, 4}, {:spade, 5}]
     end
