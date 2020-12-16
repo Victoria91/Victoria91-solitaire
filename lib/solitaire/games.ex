@@ -15,7 +15,7 @@ defmodule Solitaire.Games do
               sorted: []
             }
 
-  @ranks [:A, 2, 3, 4, 5, 6, 7, 8, 9, 10, :J, :D, :K]
+  @ranks [:A, 2, 3, 4, 5, 6, 7, 8, 9, 10, :J, :Q, :K]
   @suits ~w(spade heart diamond club)a
 
   @callback load_game(integer()) :: Games.t()

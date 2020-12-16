@@ -27,7 +27,7 @@ defmodule Solitaire.Game.SpiderTest do
             {:spade, 9},
             {:spade, 10},
             {:spade, :J},
-            {:spade, :D},
+            {:spade, :Q},
             {:spade, :K}
           ],
           unplayed: 0
@@ -45,7 +45,7 @@ defmodule Solitaire.Game.SpiderTest do
             {:heart, 9},
             {:heart, 10},
             {:heart, :J},
-            {:heart, :D},
+            {:heart, :Q},
             {:heart, :K}
           ],
           unplayed: 0
@@ -78,7 +78,7 @@ defmodule Solitaire.Game.SpiderTest do
             {:spade, 9},
             {:spade, 10},
             {:spade, :J},
-            {:spade, :D},
+            {:spade, :Q},
             {:spade, :K}
           ],
           unplayed: 0
