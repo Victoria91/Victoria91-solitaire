@@ -101,7 +101,7 @@ defmodule Solitaire.Game.KlondikeTest do
       initial_deck = [
         [{:heart, 4}],
         [],
-        [{:diamond, 2}, {:heart, :D}, {:heart, 3}]
+        [{:diamond, 2}, {:heart, :Q}, {:heart, 3}]
       ]
 
       to_column = %{cards: [{:spade, 5}], unplayed: 0}
@@ -114,7 +114,7 @@ defmodule Solitaire.Game.KlondikeTest do
         |> Map.put(:suit_count, 3)
 
       {:ok, %{deck: result_deck, cols: result_cols}} = Klondike.move_from_deck(game, 2)
-      assert result_deck == [[{:diamond, 2}, {:heart, :D}, {:heart, 3}], []]
+      assert result_deck == [[{:diamond, 2}, {:heart, :Q}, {:heart, 3}], []]
       %{cards: result_cards} = Enum.at(result_cols, 2)
       assert result_cards == [{:heart, 4}, {:spade, 5}]
     end
@@ -147,10 +147,10 @@ defmodule Solitaire.Game.KlondikeTest do
     test 4 do
       game = %Solitaire.Games{
         cols: [
-          %{cards: [{:club, :D}, {:diamond, :K}], unplayed: 0}
+          %{cards: [{:club, :Q}, {:diamond, :K}], unplayed: 0}
         ],
         deck: [
-          [{:heart, :J}, {:heart, :D}, {:club, 8}],
+          [{:heart, :J}, {:heart, :Q}, {:club, 8}],
           [],
           [{:club, 9}, {:diamond, 9}, {:club, 5}]
         ],
@@ -160,12 +160,12 @@ defmodule Solitaire.Game.KlondikeTest do
       {:ok, %{cols: cols, deck: deck}} = Klondike.move_from_deck(game, 0)
 
       assert List.first(cols) == %{
-               cards: [{:heart, :J}, {:club, :D}, {:diamond, :K}],
+               cards: [{:heart, :J}, {:club, :Q}, {:diamond, :K}],
                unplayed: 0
              }
 
       assert deck == [
-               [{:heart, :D}, {:club, 8}],
+               [{:heart, :Q}, {:club, 8}],
                [],
                [{:club, 9}, {:diamond, 9}, {:club, 5}]
              ]
@@ -239,7 +239,7 @@ defmodule Solitaire.Game.KlondikeTest do
                Klondike.move_to_foundation(game, 0)
     end
 
-    # TO-DO: нужен генератор колоды, а нет вот это вот все
+    # TO-QO: нужен генератор колоды, а нет вот это вот все
     test "unplayed handling" do
       game = %{
         cols: [%{cards: [{:spade, 2}, {:heart, 3}, {:spade, 4}], unplayed: 1}],

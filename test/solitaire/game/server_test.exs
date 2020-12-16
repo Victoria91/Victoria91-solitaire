@@ -302,7 +302,7 @@ defmodule Solitaire.Game.ServerTest do
           game_state: %{
             deck_length: 0,
             foundation: %{
-              club: %{rank: :D},
+              club: %{rank: :Q},
               diamond: %{rank: :K},
               heart: %{rank: :K},
               spade: %{rank: :K}
