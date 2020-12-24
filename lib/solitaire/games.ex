@@ -77,9 +77,7 @@ defmodule Solitaire.Games do
       Atom.to_string(rank)
     end
 
-    defp convert_rank_to_string(rank) when is_integer(rank) do
-      Integer.to_string(rank)
-    end
+    defp convert_rank_to_string(rank) when is_integer(rank), do: rank
 
     defp convert_keyword_to_list(kw) do
       Enum.map(kw, fn
