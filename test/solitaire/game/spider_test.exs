@@ -30,7 +30,8 @@ defmodule Solitaire.Game.SpiderTest do
             {:spade, :Q},
             {:spade, :K}
           ],
-          unplayed: 0
+          unplayed: 0,
+          moveable: 0
         })
         |> List.replace_at(1, %{
           cards: [
@@ -48,6 +49,7 @@ defmodule Solitaire.Game.SpiderTest do
             {:heart, :Q},
             {:heart, :K}
           ],
+          moveable: 0,
           unplayed: 0
         })
 
@@ -58,7 +60,7 @@ defmodule Solitaire.Game.SpiderTest do
       assert %{spade: %{count: 1, from: ["column", 0]}} = foundation
       assert %{heart: %{count: 1, from: ["column", 1]}} = foundation
       assert %{sorted: [:spade, :heart]} = foundation
-      assert Enum.at(cols, 0) == %{cards: [], unplayed: 0}
+      assert Enum.at(cols, 0) == %{cards: [], unplayed: 0, moveable: 0}
     end
 
     test "when card come in wrong order - does not perform move to foundation", %{

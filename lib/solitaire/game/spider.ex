@@ -47,13 +47,16 @@ defmodule Solitaire.Game.Spider do
          true <- length(cards_to_move) == ranks_length(),
          true <- cards_in_one_suit?(cards_to_move),
          true <- cards_in_sequence?(cards_to_move) do
-      Games.move_from_column_to_foundation(
-        game,
-        Games.suit(from),
-        col_num,
-        ranks_length(),
-        ["column", col_num],
-        Solitaire.Game.Spider.Foundation
+      update_moveable(
+        Games.move_from_column_to_foundation(
+          game,
+          Games.suit(from),
+          col_num,
+          ranks_length(),
+          ["column", col_num],
+          Solitaire.Game.Spider.Foundation
+        ),
+        [col_num]
       )
     else
       _result ->
