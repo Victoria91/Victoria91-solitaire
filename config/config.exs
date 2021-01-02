@@ -28,7 +28,7 @@ config :phoenix, :json_library, Jason
 
 config :solitaire, :game,
   suit_count: 1,
-  type: :spider
+  type: :klondike
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
